@@ -1,0 +1,37 @@
+{
+  "name": "liquid-glass-generator",
+  "private": true,
+  "version": "0.2.7",
+  "description": "Interactive WebGL Liquid Glass Generator with physical Snell refraction and real-time controls.",
+  "author": "MR PROG (https://github.com/MR-PR0G)",
+  "license": "MIT",
+  "homepage": "https://github.com/MR-PR0G/LiquidGlass#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MR-PR0G/LiquidGlass.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^1.16.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.1"
+  }
+}

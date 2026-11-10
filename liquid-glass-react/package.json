@@ -1,0 +1,47 @@
+{
+  "name": "@mr-prog/liquid-glass",
+  "version": "0.2.7",
+  "description": "High-performance Liquid Glass optical renderer with Snell's law refraction and chromatic dispersion by MR PROG.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./liquid-glass.css": "./dist/liquid-glass.css",
+    "./dist/liquid-glass.css": "./dist/liquid-glass.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "liquid-glass",
+    "webgl",
+    "glassmorphism",
+    "refraction",
+    "dispersion",
+    "snell-law",
+    "ios27",
+    "ui"
+  ],
+  "author": "MR PROG (https://github.com/MR-PR0G)",
+  "homepage": "https://github.com/MR-PR0G/LiquidGlass#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MR-PR0G/LiquidGlass.git"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}

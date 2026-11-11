@@ -843,7 +843,9 @@ export function generateStandaloneHtml(
 export function generateNodeReactCode(
   config: LiquidGlassConfig,
   shadowTone: ShadowTone = 'dark',
-  isShadowInverted: boolean = false
+  isShadowInverted: boolean = false,
+  innerContentMode: 'text' | 'nav' | 'player' = 'nav',
+  borderGradient?: string
 ): {
   installCommand: string;
   importCode: string;
@@ -865,254 +867,70 @@ export function generateNodeReactCode(
   const blurVal = (config.blur ?? 0).toFixed(1);
   const borderOpacityVal = (config.borderOpacity ?? 0.12).toFixed(3);
   const shadowStepVal = config.shadowStep ?? 5;
-  const thicknessStepVal = config.thicknessStep ?? 5;
   const viscosityVal = (config.viscosity ?? 0.6).toFixed(2);
   const thicknessVal = (config.thickness ?? 450).toString();
   const tintColorVal = config.tintColor ?? '#000000';
-  const topRadiusVal = typeof config.topRadius === 'number' ? config.topRadius : radius;
-  const bottomRadiusVal = typeof config.bottomRadius === 'number' ? config.bottomRadius : radius;
-  const boxShadowCss = computeGlassBoxShadow(shadowStepVal, shadowTone, config.borderOpacity, thicknessStepVal, isShadowInverted);
 
   const installCommand = `npm i @mr-prog/liquid-glass`;
 
-  const importCode = `import { LiquidGlass, LiquidGlassNavbar } from '@mr-prog/liquid-glass';`;
+  const importCode = `import { LiquidGlass } from '@mr-prog/liquid-glass';
+import '@mr-prog/liquid-glass/liquid-glass.css';`;
 
-  const componentSnippet = `{/* 1. Flagship Liquid Glass Navbar */}
-<LiquidGlassNavbar />
+  const componentSnippet = `{/* Flagship Liquid Glass Component by MR PROG */}
+{/* 1. Minimal One-Line Call */}
+<LiquidGlass mode="${innerContentMode}" />
 
-{/* 2. Custom Liquid Glass Surface */}
+{/* 2. Configured with Your Exact Generator Settings */}
 <LiquidGlass
+  mode="${innerContentMode}"
   refraction={${refractionVal}}
   bevel={${bevelVal}}
   dispersion={${dispersionVal}}
   darkTint={${darkTint}}
   tintColor="${tintColorVal}"
   blur={${blurVal}}
-  radius={${radius}}
-  topRadius={${topRadiusVal}}
-  bottomRadius={${bottomRadiusVal}}
-  shadowStep={${shadowStepVal}}
-  shadowTone="${shadowTone}"
-  isShadowInverted={${isShadowInverted}}
-  borderOpacity={${borderOpacityVal}}
   viscosity={${viscosityVal}}
   thickness={${thicknessVal}}
-  style={{ width: '${config.width}px', height: '${config.height}px' }}
->
-  <div style={{ color: '#fff', fontWeight: 700, letterSpacing: '0.25em' }}>
-    LIQUID GLASS
-  </div>
-</LiquidGlass>`;
+  radius={${radius}}
+  shadowTone="${shadowTone}"
+  shadowStep={${shadowStepVal}}
+  isShadowInverted={${isShadowInverted}}
+  borderOpacity={${borderOpacityVal}}${borderGradient ? `\n  borderGradient="${borderGradient}"` : ''}
+  style={{ width: 'min(90vw, ${config.width}px)', height: '${config.height}px' }}
+/>`;
 
-  const fullComponentCode = `import React, { useRef, useEffect } from 'react';
+  const fullComponentCode = `import React from 'react';
+import { LiquidGlass } from '@mr-prog/liquid-glass';
+import '@mr-prog/liquid-glass/liquid-glass.css';
 
-// ====================================================================
-// Liquid Glass Effect - Real Snell Ray-Tracing (Zero-Dep)
-// Pure WebGL2 Snell Optics Engine with Exact SDF Bevel Curvature
-// ====================================================================
-export interface LiquidGlassProps {
-  refraction?: number;
-  bevel?: number;
-  dispersion?: number;
-  darkTint?: number;
-  tintColor?: string;
-  blur?: number;
-  radius?: number;
-  topRadius?: number;
-  bottomRadius?: number;
-  shadowStep?: number;
-  shadowTone?: 'dark' | 'light' | '3d';
-  isShadowInverted?: boolean;
-  borderOpacity?: number;
-  viscosity?: number;
-  thickness?: number;
-  className?: string;
-  style?: React.CSSProperties;
-  children?: React.ReactNode;
-}
-
-export const LiquidGlass: React.FC<LiquidGlassProps> = ({
-  refraction = ${refractionVal},
-  bevel = ${bevelVal},
-  dispersion = ${dispersionVal},
-  darkTint = ${darkTint},
-  tintColor = '${tintColorVal}',
-  blur = ${blurVal},
-  radius = ${radius},
-  topRadius = ${topRadiusVal},
-  bottomRadius = ${bottomRadiusVal},
-  shadowStep = ${shadowStepVal},
-  shadowTone = '${shadowTone}',
-  isShadowInverted = ${isShadowInverted},
-  borderOpacity = ${borderOpacityVal},
-  viscosity = ${viscosityVal},
-  thickness = ${thicknessVal},
-  className = '',
-  style,
-  children,
-}) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-
-    const gl = canvas.getContext('webgl2', { alpha: true, antialias: true, premultipliedAlpha: false });
-    if (!gl) return;
-
-    const vsSource = \`#version 300 es
-      in vec2 aPosition;
-      out vec2 vUv;
-      void main() {
-        vUv = (aPosition + 1.0) * 0.5;
-        gl_Position = vec4(aPosition, 0.0, 1.0);
-      }
-    \`;
-
-    const fsSource = \`#version 300 es
-      precision highp float;
-      in vec2 vUv;
-      out vec4 fragColor;
-
-      uniform vec2 uLensSize;
-      uniform float uRadius;
-      uniform float uRefraction;
-      uniform float uBevel;
-      uniform float uDispersion;
-      uniform float uDarkTint;
-
-      float sdRoundedBox(vec2 p, vec2 b, float r) {
-        vec2 q = abs(p) - b + r;
-        return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
-      }
-
-      void main() {
-        vec2 pixelPos = vUv * uLensSize;
-        vec2 halfSize = uLensSize * 0.5;
-        vec2 p = pixelPos - halfSize;
-        float r = min(uRadius, min(halfSize.x, halfSize.y));
-        float d = sdRoundedBox(p, halfSize, r);
-
-        if (d > 0.0) {
-          fragColor = vec4(0.0);
-          return;
-        }
-
-        float distInward = -d;
-        float bevelWidth = clamp(uBevel, 8.0, min(halfSize.y * 0.85, 48.0));
-        float t = clamp(distInward / bevelWidth, 0.0, 1.0);
-        float slope = cos(t * 1.5707963) * (1.0 - t);
-
-        vec3 color = vec3(0.05, 0.08, 0.14);
-        color = mix(color, vec3(0.0), uDarkTint);
-        float edgeAlpha = clamp(distInward + 0.5, 0.0, 1.0);
-        fragColor = vec4(color, edgeAlpha);
-      }
-    \`;
-
-    function createShader(gl: WebGL2RenderingContext, type: number, source: string) {
-      const shader = gl.createShader(type)!;
-      gl.shaderSource(shader, source);
-      gl.compileShader(shader);
-      return shader;
-    }
-
-    const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
-    const program = gl.createProgram()!;
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-
-    const quadBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-
-    const uLocs = {
-      uLensSize: gl.getUniformLocation(program, 'uLensSize'),
-      uRadius: gl.getUniformLocation(program, 'uRadius'),
-      uRefraction: gl.getUniformLocation(program, 'uRefraction'),
-      uBevel: gl.getUniformLocation(program, 'uBevel'),
-      uDispersion: gl.getUniformLocation(program, 'uDispersion'),
-      uDarkTint: gl.getUniformLocation(program, 'uDarkTint'),
-    };
-
-    const render = () => {
-      const rect = container.getBoundingClientRect();
-      canvas.width = Math.round(rect.width);
-      canvas.height = Math.round(rect.height);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-
-      gl.useProgram(program);
-      gl.uniform2f(uLocs.uLensSize, rect.width, rect.height);
-      gl.uniform1f(uLocs.uRadius, radius);
-      gl.uniform1f(uLocs.uRefraction, Number(refractionVal));
-      gl.uniform1f(uLocs.uBevel, bevelVal);
-      gl.uniform1f(uLocs.uDispersion, Number(dispersionVal));
-      gl.uniform1f(uLocs.uDarkTint, Number(darkTint));
-
-      const aPos = gl.getAttribLocation(program, 'aPosition');
-      gl.enableVertexAttribArray(aPos);
-      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
-      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    };
-
-    render();
-
-    const ro = new ResizeObserver(() => render());
-    ro.observe(container);
-
-    return () => {
-      ro.disconnect();
-      gl.deleteProgram(program);
-      gl.deleteShader(vs);
-      gl.deleteShader(fs);
-      gl.deleteBuffer(quadBuffer);
-    };
-  }, [refractionVal, bevelVal, dispersionVal, darkTint, radius]);
-
-  const cornerRadiusCss = radius >= 999 ? '9999px' : \`\${radius}px\`;
-
+/**
+ * Liquid Glass Showcase Component
+ * Author: MR PROG (https://github.com/MR-PR0G)
+ * License: MIT
+ */
+export default function LiquidGlassShowcase() {
   return (
-    <div
-      ref={containerRef}
-      className={\`relative overflow-hidden flex items-center justify-center \${className}\`}
-      style={{
-        width: '${config.width}px',
-        height: '${config.height}px',
-        borderRadius: cornerRadiusCss,
-        backgroundColor: Number(darkTint) > 0 ? \`rgba(0, 0, 0, \${darkTint})\` : 'transparent',
-        border: \`1px solid rgba(255, 255, 255, \${borderOpacityVal})\`,
-        boxShadow: '${boxShadowCss}',
-        ...style,
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ borderRadius: 'inherit' }}
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#07070c] p-6">
+      <LiquidGlass
+        mode="${innerContentMode}"
+        refraction={${refractionVal}}
+        bevel={${bevelVal}}
+        dispersion={${dispersionVal}}
+        darkTint={${darkTint}}
+        tintColor="${tintColorVal}"
+        blur={${blurVal}}
+        viscosity={${viscosityVal}}
+        thickness={${thicknessVal}}
+        radius={${radius}}
+        shadowTone="${shadowTone}"
+        shadowStep={${shadowStepVal}}
+        isShadowInverted={${isShadowInverted}}
+        borderOpacity={${borderOpacityVal}}${borderGradient ? `\n        borderGradient="${borderGradient}"` : ''}
+        style={{ width: 'min(90vw, ${config.width}px)', height: '${config.height}px' }}
       />
-${isShadowInverted ? `      {/* Inverted Curvature Light / Shadow Aura Layer */}
-      <div
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{
-          borderRadius: 'inherit',
-          boxShadow: '${computeInvertedGlassAura(shadowStepVal, shadowTone, config.borderOpacity)}',
-          zIndex: 4,
-        }}
-      />\n` : ''}      <div className="relative z-10 select-none pointer-events-none">
-        {children}
-      </div>
     </div>
   );
-};
+}
 `;
 
   return {

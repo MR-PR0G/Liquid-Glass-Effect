@@ -7,13 +7,21 @@
  * Production-grade Liquid Glass Optical Container for React.
  * Seamlessly integrates physical Snell ray-tracing WebGL shaders with
  * luxurious multi-layer CSS liquid glass optics, chromatic borders, and 3D caustics.
+ * 
+ * Supports 4 built-in flagship modes:
+ * - 'nav': Interactive draggable liquid squircle navbar
+ * - 'text': Fluid drag-elastic typography with viscosity resistance
+ * - 'player': Frosted Cupertino glass audio player
+ * - 'empty': Clean optical liquid glass capsule container
  */
 
-import React, { forwardRef, HTMLAttributes } from 'react';
+import React, { forwardRef, useState, HTMLAttributes } from 'react';
 import { SoapBubbleSurface } from './soap-bubble-system';
 import { SoapBubbleMaterial } from './use-soap-bubble';
+import { LiquidGlassNavbar, NavbarItem } from './LiquidGlassNavbar';
 
 export type ShadowTone = 'dark' | 'light' | '3d';
+export type LiquidGlassMode = 'nav' | 'text' | 'player' | 'empty';
 
 export interface BorderPreset {
   id: 'white' | 'prism' | 'cyan' | 'gold' | 'chrome' | 'custom';
@@ -132,7 +140,9 @@ export function computeInvertedGlassAura(
   return `${rim}, ${meniscus}, ${deepAura}, ${topDome}, ${bottomDome}${deepWash}`;
 }
 
-export interface LiquidGlassProps extends HTMLAttributes<HTMLDivElement> {
+export interface LiquidGlassProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  /** Display mode: 'nav' (navbar), 'text' (draggable typography), 'player' (audio player), 'empty' (custom children) */
+  mode?: LiquidGlassMode;
   /** Optional HTMLCanvasElement or HTMLElement backdrop for hardware Snell ray-tracing */
   backdrop?: React.RefObject<HTMLCanvasElement | HTMLElement | null> | null;
   /** Snell's law physical refraction index (default 0.35) */
@@ -173,13 +183,32 @@ export interface LiquidGlassProps extends HTMLAttributes<HTMLDivElement> {
   isShadowInverted?: boolean;
   /** Horizontal fluid drag tension offset in pixels */
   tensionX?: number;
+  /** Callback during fluid elastic tension offset */
+  onTension?: (tensionX: number) => void;
   /** Enable interactive surface wave response on pointer move/click */
   interactive?: boolean;
   /** Dynamic fluid wobble elasticity (default 0) */
   wobble?: number;
   /** Fresnel surface reflectivity (default 0.0) */
   reflectivity?: number;
-  /** Inner content node */
+
+  // Mode: 'nav' props
+  items?: NavbarItem[];
+  activeIndex?: number;
+  defaultIndex?: number;
+  onChange?: (index: number, item: NavbarItem) => void;
+  accentColor?: string;
+
+  // Mode: 'text' props
+  text?: string;
+
+  // Mode: 'player' props
+  audioTitle?: string;
+  isPlaying?: boolean;
+  onPlayToggle?: () => void;
+  onNextTrack?: () => void;
+
+  /** Inner content node (used when mode === 'empty' or passed directly) */
   children?: React.ReactNode;
 }
 
@@ -192,6 +221,7 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
+  mode = 'empty',
   backdrop,
   refraction = 0.35,
   bevel = 28,
@@ -211,15 +241,37 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   shadowStep = 5,
   shadowTone = '3d',
   isShadowInverted = false,
-  tensionX = 0,
+  tensionX: controlledTensionX,
+  onTension,
   interactive = false,
   wobble = 0,
   reflectivity = 0.0,
   className = '',
   style = {},
+  // Mode-specific props
+  items,
+  activeIndex,
+  defaultIndex,
+  onChange,
+  accentColor = '#00e5ff',
+  text = 'LIQUID GLASS',
+  audioTitle = 'Cupertino Waves',
+  isPlaying: externalIsPlaying,
+  onPlayToggle,
+  onNextTrack,
   children,
   ...rest
 }, ref) => {
+  const [internalTensionX, setInternalTensionX] = useState(0);
+  const [internalIsPlaying, setInternalIsPlaying] = useState(false);
+  const isPlaying = externalIsPlaying !== undefined ? externalIsPlaying : internalIsPlaying;
+  const currentTensionX = controlledTensionX !== undefined ? controlledTensionX : internalTensionX;
+
+  const handleTension = (tx: number) => {
+    if (controlledTensionX === undefined) setInternalTensionX(tx);
+    onTension?.(tx);
+  };
+
   const effectiveTopRadius = topRadius !== undefined ? topRadius : radius;
   const effectiveBottomRadius = bottomRadius !== undefined ? bottomRadius : radius;
   const radiusCss = `${effectiveTopRadius}px ${effectiveTopRadius}px ${effectiveBottomRadius}px ${effectiveBottomRadius}px`;
@@ -230,7 +282,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   const invertedAura = computeInvertedGlassAura(shadowStep, shadowTone, borderOpacity);
 
   // Dynamic fluid spring transition based on viscosityStep:
-  const transitionTiming = tensionX !== 0
+  const transitionTiming = currentTensionX !== 0
     ? 'none'
     : (viscosityStep >= 7
         ? 'transform 240ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms ease, height 300ms ease'
@@ -242,15 +294,142 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   const effectiveBlur = blur > 0 ? blur : 14;
   const backdropFilterCss = `blur(${effectiveBlur}px) saturate(1.8) brightness(1.10)`;
 
+  // Inner content renderer based on mode
+  const renderInnerContent = () => {
+    if (mode === 'nav') {
+      return (
+        <div className="relative flex items-center justify-center w-full h-full pointer-events-auto px-1">
+          <LiquidGlassNavbar
+            embedded={true}
+            items={items}
+            activeIndex={activeIndex}
+            defaultIndex={defaultIndex}
+            onChange={onChange}
+            onTension={handleTension}
+            backdropRef={backdrop as React.RefObject<HTMLCanvasElement | null>}
+            darkTint={darkTint}
+            refraction={refraction}
+            bevel={bevel}
+            viscosity={viscosity}
+            viscosityStep={viscosityStep}
+            thickness={thickness}
+            thicknessStep={thicknessStep}
+            dispersion={dispersion}
+            blur={blur}
+            borderOpacity={borderOpacity}
+            accentColor={accentColor}
+            shadowTone={shadowTone}
+            shadowStep={shadowStep}
+          />
+        </div>
+      );
+    }
+
+    if (mode === 'text') {
+      return (
+        <div
+          className="flex items-center justify-center w-full h-full cursor-grab active:cursor-grabbing select-none px-4"
+          onPointerDown={(e) => {
+            const startX = e.clientX;
+            const onMove = (ev: PointerEvent) => {
+              const dx = ev.clientX - startX;
+              const stiffness = 0.14 + (viscosityStep / 10) * 1.8;
+              const tension = (dx / (1 + Math.abs(dx) * 0.026 * stiffness)) * 0.55;
+              handleTension(tension);
+            };
+            const onUp = () => {
+              window.removeEventListener('pointermove', onMove);
+              window.removeEventListener('pointerup', onUp);
+              handleTension(0);
+            };
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+          }}
+          title="Drag horizontally to test fluid elastic viscosity"
+        >
+          <span className="font-mono text-xs sm:text-sm md:text-base lg:text-lg font-bold tracking-[0.28em] text-zinc-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] uppercase truncate max-w-full">
+            {text}
+          </span>
+        </div>
+      );
+    }
+
+    if (mode === 'player') {
+      return (
+        <div className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto px-4">
+          <div className="flex items-center gap-2">
+            <svg 
+              width={16} 
+              height={16} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth={2.2} 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="text-cyan-400 animate-pulse"
+            >
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+            <span className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 truncate max-w-[130px] sm:max-w-[190px]">
+              {audioTitle}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (externalIsPlaying === undefined) setInternalIsPlaying(!isPlaying);
+                onPlayToggle?.();
+              }}
+              className="p-1.5 rounded-full hover:bg-white/20 transition-all text-white cursor-pointer"
+              title={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? (
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16" rx="1"/>
+                  <rect x="14" y="4" width="4" height="16" rx="1"/>
+                </svg>
+              ) : (
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNextTrack?.();
+              }}
+              className="p-1.5 rounded-full hover:bg-white/20 transition-all text-zinc-400 hover:text-white cursor-pointer"
+              title="Next Track"
+            >
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 4 15 12 5 20 5 4"/>
+                <line x1="19" y1="5" x2="19" y2="19"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return children;
+  };
+
   return (
     <div
       ref={ref}
-      className={`relative select-none ${className}`}
+      className={`relative select-none flex items-center justify-center ${className}`}
       style={{
         borderRadius: radiusCss,
         backgroundColor: darkTintRgba,
         boxShadow: glassShadow,
-        transform: `translate3d(${tensionX}px, 0, 0)`,
+        transform: `translate3d(${currentTensionX}px, 0, 0)`,
         transition: transitionTiming,
         ...style,
       }}
@@ -292,7 +471,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
         />
       )}
 
-      {/* 2. Pristine Multi-Layer CSS Liquid Glass Layer (Fallback or enhance when backdrop canvas is not attached) */}
+      {/* 2. Pristine Multi-Layer CSS Liquid Glass Layer (Active when backdrop canvas is not attached) */}
       {!backdrop && (
         <div
           className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
@@ -339,9 +518,11 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 
       {/* 5. Content Container */}
       <div 
-        className="relative z-10 w-full h-full rounded-[inherit] flex items-center justify-center"
+        className={`relative z-10 w-full h-full rounded-[inherit] flex items-center justify-center ${
+          mode === 'nav' ? 'overflow-visible' : 'overflow-hidden'
+        }`}
       >
-        {children}
+        {renderInnerContent()}
       </div>
     </div>
   );

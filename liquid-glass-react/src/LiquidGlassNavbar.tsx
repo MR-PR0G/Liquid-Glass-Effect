@@ -12,7 +12,7 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { SoapBubbleSurface } from './soap-bubble-system';
 import type { SoapBubbleRenderer } from './soap-bubble-renderer';
-import { LiquidGlass, ShadowTone, BorderPreset, BORDER_PRESETS } from './LiquidGlass';
+import { LiquidGlass, ShadowTone } from './LiquidGlass';
 
 export interface NavbarItem {
   id: string;

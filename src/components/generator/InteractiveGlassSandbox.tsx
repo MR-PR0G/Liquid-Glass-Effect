@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { LiquidGlassConfig, DEFAULT_GLASS_STEPS, ShadowTone, computeGlassBoxShadow, computeInvertedGlassAura } from '../../types';
-import { SoapBubbleSurface, notifyBackdropChanged } from '../soap-bubble';
+import { LiquidGlassConfig, DEFAULT_GLASS_STEPS, ShadowTone } from '../../types';
+import { notifyBackdropChanged } from '../soap-bubble';
 import { generateNodeReactCode, generateSeparatedExportCode } from '../../utils/exportCode';
 import { createSolidEngine } from '../shape-physics/solid-engine';
 import { shapeDefaults } from '../shape-physics/shape-settings';
-import { LiquidGlassNavbar } from '../navbar';
+import { LiquidGlass } from '../../../liquid-glass-react/src/LiquidGlass';
 import { 
   Sliders, 
   Gauge, 
@@ -23,18 +23,15 @@ import {
   Circle,
   Maximize2, 
   Shield, 
-  ChevronDown,
-  ChevronUp,
-  Code2,
-  Package,
-  BookOpen,
-  X,
-  Plus,
-  Play,
-  SkipForward,
-  Music,
-  Link2,
-  Unlink
+  ChevronDown, 
+  ChevronUp, 
+  Code2, 
+  Package, 
+  BookOpen, 
+  X, 
+  Plus, 
+  Link2, 
+  Unlink 
 } from 'lucide-react';
 
 interface InteractiveGlassSandboxProps {
@@ -61,6 +58,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
   const [selectedWallpaper, setSelectedWallpaper] = useState('cross');
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
+  const [docTab, setDocTab] = useState<'quickstart' | 'modes' | 'props' | 'physics' | 'npm'>('quickstart');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isReactModalOpen, setIsReactModalOpen] = useState(false);
   const [exportTab, setExportTab] = useState<'all' | 'html' | 'css' | 'js'>('all');
@@ -112,14 +110,6 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
     { id: 'chrome', name: 'Liquid Chrome', gradient: 'linear-gradient(135deg, #ffffff, #94a3b8, #ffffff, #475569)', previewStyle: 'bg-gradient-to-tr from-white via-slate-400 to-zinc-600' },
   ];
 
-  const hexToRgba = (hex: string, alpha: number) => {
-    const clean = hex.replace('#', '');
-    const r = parseInt(clean.substring(0, 2), 16) || 0;
-    const g = parseInt(clean.substring(2, 4), 16) || 0;
-    const b = parseInt(clean.substring(4, 6), 16) || 0;
-    return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
-  };
-
   const maxCapsuleRadius = Math.max(1, Math.round(config.height / 2));
   const stepToRadiusPx = (step: number) => {
     if (step <= 0) return 0;
@@ -129,16 +119,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
 
   const topRadiusPx = stepToRadiusPx(topRadiusStep);
   const bottomRadiusPx = stepToRadiusPx(bottomRadiusStep);
-  const radiusCss = topRadiusPx === bottomRadiusPx
-    ? `${topRadiusPx}px`
-    : `${topRadiusPx}px ${topRadiusPx}px ${bottomRadiusPx}px ${bottomRadiusPx}px`;
-
-  const darkTintRgba = config.darkTint > 0 ? hexToRgba(tintColor, config.darkTint) : 'transparent';
   const currentBorderPreset = BORDER_PRESETS.find(p => p.id === borderPreset);
   const borderGradient = currentBorderPreset?.gradient;
-  const borderColorRgba = borderPreset === 'custom'
-    ? hexToRgba(customBorderColor, config.borderOpacity)
-    : `rgba(255, 255, 255, ${config.borderOpacity})`;
   
   // Bounded concise scroll parameters: responsive, snappy, no endless empty space
   // - MIN_SCROLL (-85): Prevents scrolling down into excessive empty black space below text
@@ -729,7 +711,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
   };
 
   const handleCopyReactModule = () => {
-    const { fullComponentCode } = generateNodeReactCode(exportConfig, shadowTone, isShadowInverted);
+    const { fullComponentCode } = generateNodeReactCode(exportConfig, shadowTone, isShadowInverted, innerContentMode, borderGradient);
     navigator.clipboard.writeText(fullComponentCode);
     setCopiedAction('copy-react');
     setTimeout(() => setCopiedAction(null), 2500);
@@ -1532,169 +1514,39 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
 
         {/* ================= ZONE B: LIQUID GLASS OBSERVATION STAGE ================= */}
         {/* Anchored neatly below with ample clearance so Controls never overlaps */}
+        {/* Uses the official @mr-prog/liquid-glass module directly with live backdrop refraction */}
         <div className="relative z-20 pb-4 sm:pb-8 px-4 flex items-center justify-center pointer-events-none">
-          <div
-            className="flex items-center justify-center relative pointer-events-auto h-[clamp(46px,min(var(--capsule-h),88px),88px)] sm:h-[var(--capsule-h)]"
+          <LiquidGlass
+            backdrop={canvasRef}
+            mode={innerContentMode}
+            refraction={config.thicknessStep >= 9 ? config.refraction * 2.85 : config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75)}
+            bevel={Math.round(config.thicknessStep >= 9 ? config.bevel * 2.3 : config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55))}
+            dispersion={config.dispersion}
+            blur={config.blur}
+            darkTint={config.darkTint}
+            tintColor={tintColor}
+            thickness={config.thickness}
+            thicknessStep={config.thicknessStep}
+            viscosity={config.viscosity}
+            viscosityStep={config.viscosityStep}
+            radius={maxCapsuleRadius}
+            topRadius={topRadiusPx}
+            bottomRadius={bottomRadiusPx}
+            borderOpacity={config.borderOpacity}
+            borderGradient={borderGradient}
+            shadowStep={config.shadowStep}
+            shadowTone={shadowTone}
+            isShadowInverted={isShadowInverted}
+            tensionX={panelTensionX}
+            onTension={setPanelTensionX}
+            activeIndex={activeNavTab}
+            onChange={setActiveNavTab}
+            className="pointer-events-auto h-[clamp(46px,min(var(--capsule-h),88px),88px)] sm:h-[var(--capsule-h)]"
             style={{
               ['--capsule-h' as any]: `${config.height}px`,
               width: `min(90vw, ${config.width}px)`,
-              borderRadius: radiusCss,
-              backgroundColor: darkTintRgba,
-              boxShadow: computeGlassBoxShadow(config.shadowStep, shadowTone, config.borderOpacity, config.thicknessStep, isShadowInverted),
-              transform: `translate3d(${panelTensionX}px, 0, 0)`,
-              transition: panelTensionX !== 0
-                ? 'none'
-                : (config.viscosityStep >= 7
-                    ? 'transform 240ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms ease, height 300ms ease'
-                    : config.viscosityStep <= 3
-                    ? 'transform 640ms cubic-bezier(0.12, 1.68, 0.28, 1), width 300ms ease, height 300ms ease'
-                    : 'transform 420ms cubic-bezier(0.16, 1.25, 0.3, 1), width 300ms ease, height 300ms ease'),
             }}
-          >
-            {/* The Real WebGL Physical Snell Refraction Layer - Clean Pure Glass, NO fake white streaks */}
-            <SoapBubbleSurface
-              backdrop={canvasRef}
-              interactive={false}
-              wobble={0}
-              tilt={0}
-              radius={maxCapsuleRadius}
-              topRadius={topRadiusPx}
-              bottomRadius={bottomRadiusPx}
-              glass={config.glass}
-              refraction={(config.thicknessStep >= 9 ? config.refraction * 2.85 : config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75))}
-              bevel={Math.round((config.thicknessStep >= 9 ? config.bevel * 2.3 : config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55)))}
-              dispersion={config.dispersion}
-              blur={config.blur}
-              clearCenter={config.clearCenter}
-              paused={selectedWallpaper !== 'shapes'}
-              speed={selectedWallpaper === 'shapes' ? 0.8 : 0}
-              
-              oilCoverage={0}
-              oilOpacity={0}
-              iridescence={0}
-              glintIntensity={0}
-              reflectivity={0.0}
-              thickness={config.thickness}
-              windowLight={false}
-              windowIntensity={0}
-              floorLight={0}
-              bottomShade={false}
-              keyLight={false}
-              tint={darkTintRgba}
-
-              className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
-              style={{
-                borderRadius: radiusCss,
-                backgroundColor: darkTintRgba,
-                border: (config.borderStep === 0 || config.borderOpacity <= 0) ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
-                backdropFilter: `blur(${config.blur}px)`,
-                WebkitBackdropFilter: `blur(${config.blur}px)`,
-              }}
-            />
-
-            {/* Gradient border overlay with CSS mask-composite for curved glass */}
-            {borderGradient && config.borderStep > 0 && config.borderOpacity > 0 && (
-              <div
-                className="absolute inset-0 pointer-events-none rounded-[inherit]"
-                style={{
-                  borderRadius: radiusCss,
-                  padding: '1px',
-                  background: borderGradient,
-                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  WebkitMaskComposite: 'xor',
-                  maskComposite: 'exclude',
-                  opacity: Math.min(1.0, (config.borderStep / 10) * 0.95),
-                  zIndex: 3,
-                  transition: 'opacity 200ms ease, background 200ms ease',
-                }}
-              />
-            )}
-
-            {/* Inverted Curvature Light / Shadow Aura Layer - strictly on top of WebGL canvas, below content */}
-            <div
-              className="absolute inset-0 w-full h-full pointer-events-none rounded-[inherit]"
-              style={{
-                borderRadius: radiusCss,
-                boxShadow: isShadowInverted ? computeInvertedGlassAura(config.shadowStep, shadowTone, config.borderOpacity) : 'none',
-                opacity: isShadowInverted ? 1 : 0,
-                zIndex: 4,
-                transition: 'box-shadow 200ms ease, opacity 200ms ease',
-              }}
-            />
-
-            {/* Interactive Inner Content Layer: 100% sharp in flat core, strictly contained */}
-            <div className={`relative z-10 flex items-center justify-center w-full h-full select-none ${innerContentMode === 'nav' ? 'overflow-visible px-1' : 'overflow-hidden px-4'} rounded-[inherit]`}>
-              {innerContentMode === 'text' && (
-                <div 
-                  className="flex items-center justify-center w-full h-full cursor-grab active:cursor-grabbing select-none"
-                  onPointerDown={(e) => {
-                    const startX = e.clientX;
-                    const onMove = (ev: PointerEvent) => {
-                      const dx = ev.clientX - startX;
-                      // Dynamic stiffness from viscosity (Requirement 3: expanded fluid give):
-                      const stiffness = 0.14 + (config.viscosityStep / 10) * 1.8;
-                      const tension = (dx / (1 + Math.abs(dx) * 0.026 * stiffness)) * 0.55;
-                      setPanelTensionX(tension);
-                    };
-                    const onUp = () => {
-                      window.removeEventListener('pointermove', onMove);
-                      window.removeEventListener('pointerup', onUp);
-                      setPanelTensionX(0);
-                    };
-                    window.addEventListener('pointermove', onMove);
-                    window.addEventListener('pointerup', onUp);
-                  }}
-                  title="Drag horizontally to test fluid elastic viscosity"
-                >
-                  <span className="font-mono text-xs sm:text-sm md:text-base lg:text-lg font-bold tracking-[0.28em] text-zinc-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] uppercase truncate max-w-full">
-                    LIQUID GLASS
-                  </span>
-                </div>
-              )}
-
-              {innerContentMode === 'nav' && (
-                <div className="relative flex items-center justify-center w-full h-full pointer-events-auto">
-                  <LiquidGlassNavbar
-                    activeIndex={activeNavTab}
-                    onChange={setActiveNavTab}
-                    onTension={setPanelTensionX}
-                    backdropRef={canvasRef}
-                    darkTint={config.darkTint}
-                    darkTintStep={config.darkTintStep}
-                    refraction={config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75)}
-                    bevel={Math.round(config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55))}
-                    viscosity={config.viscosity}
-                    viscosityStep={config.viscosityStep}
-                    thickness={config.thickness}
-                    thicknessStep={config.thicknessStep}
-                    shadowStep={config.shadowStep}
-                    shadowTone={shadowTone}
-                    borderOpacity={config.borderOpacity}
-                    blur={config.blur}
-                  />
-                </div>
-              )}
-
-              {innerContentMode === 'player' && (
-                <div className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto">
-                  <div className="flex items-center gap-2">
-                    <Music size={15} className="text-cyan-400 animate-pulse" />
-                    <span className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 truncate max-w-[130px] sm:max-w-[190px]">
-                      Cupertino Waves
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="p-1 rounded-full hover:bg-white/20 transition-all text-white" title="Play">
-                      <Play size={14} className="fill-white" />
-                    </button>
-                    <button className="p-1 rounded-full hover:bg-white/20 transition-all text-zinc-400 hover:text-white" title="Next">
-                      <SkipForward size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          />
         </div>
 
         {/* Sleek Minimalist Vertical Scroll Indicator (Hidden for Shape Physics which is non-scrolling) */}
@@ -1862,10 +1714,12 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                     type="button"
                     onClick={() => {
                       const snippet = `import { LiquidGlass } from '@mr-prog/liquid-glass';
+import '@mr-prog/liquid-glass/liquid-glass.css';
 
-export default function GlassNavbar() {
+export default function MyLiquidGlass() {
   return (
     <LiquidGlass
+      mode="${innerContentMode}"
       refraction={${config.refraction.toFixed(2)}}
       bevel={${config.bevel}}
       dispersion={${config.dispersion.toFixed(2)}}
@@ -1874,20 +1728,12 @@ export default function GlassNavbar() {
       tintColor="${tintColor}"
       thickness={${config.thickness}}
       viscosity={${(config.viscosityStep / 10).toFixed(2)}}
-      radius={${topRadiusStep === bottomRadiusStep ? (topRadiusStep >= 10 ? 9999 : topRadiusPx) : `${topRadiusPx}`}}
-      topRadius={${topRadiusPx}}
-      bottomRadius={${bottomRadiusPx}}
       shadowTone="${shadowTone}"
+      shadowStep={${config.shadowStep}}
       isShadowInverted={${isShadowInverted}}
       borderOpacity={${config.borderOpacity.toFixed(2)}}
-      className="p-4 rounded-3xl"
-    >
-      <nav className="flex items-center gap-4 text-white">
-        <span>Home</span>
-        <span>Features</span>
-        <span>Pricing</span>
-      </nav>
-    </LiquidGlass>
+      ${borderGradient ? `borderGradient="${borderGradient}"\n      ` : ''}style={{ width: 'min(90vw, ${config.width}px)', height: '${config.height}px' }}
+    />
   );
 }`;
                       navigator.clipboard.writeText(snippet);
@@ -1911,34 +1757,28 @@ export default function GlassNavbar() {
               </div>
               <div className="relative rounded-xl border border-white/10 bg-[#06080e] overflow-hidden p-3 font-mono text-xs text-zinc-300 leading-relaxed max-h-[220px] overflow-y-auto">
                 <pre><code>{`import { LiquidGlass } from '@mr-prog/liquid-glass';
+import '@mr-prog/liquid-glass/liquid-glass.css';
 
-export default function GlassNavbar() {
-  return (
-    <LiquidGlass
-      refraction={${config.refraction.toFixed(2)}}
-      bevel={${config.bevel}}
-      dispersion={${config.dispersion.toFixed(2)}}
-      blur={${config.blur}}
-      darkTint={${config.darkTint.toFixed(2)}}
-      tintColor="${tintColor}"
-      thickness={${config.thickness}}
-      viscosity={${(config.viscosityStep / 10).toFixed(2)}}
-      radius={${topRadiusStep === bottomRadiusStep ? (topRadiusStep >= 10 ? 9999 : topRadiusPx) : `${topRadiusPx}`}}
-      topRadius={${topRadiusPx}}
-      bottomRadius={${bottomRadiusPx}}
-      shadowTone="${shadowTone}"
-      isShadowInverted={${isShadowInverted}}
-      borderOpacity={${config.borderOpacity.toFixed(2)}}
-      className="p-4 rounded-3xl"
-    >
-      <nav className="flex items-center gap-4 text-white">
-        <span>Home</span>
-        <span>Features</span>
-        <span>Pricing</span>
-      </nav>
-    </LiquidGlass>
-  );
-}`}</code></pre>
+// 1. One-Line Flagship Call (Default Props)
+<LiquidGlass mode="${innerContentMode}" />
+
+// 2. Customized with Your Exact Generator Settings
+<LiquidGlass
+  mode="${innerContentMode}"
+  refraction={${config.refraction.toFixed(2)}}
+  bevel={${config.bevel}}
+  dispersion={${config.dispersion.toFixed(2)}}
+  blur={${config.blur}}
+  darkTint={${config.darkTint.toFixed(2)}}
+  tintColor="${tintColor}"
+  thickness={${config.thickness}}
+  viscosity={${(config.viscosityStep / 10).toFixed(2)}}
+  shadowTone="${shadowTone}"
+  shadowStep={${config.shadowStep}}
+  isShadowInverted={${isShadowInverted}}
+  borderOpacity={${config.borderOpacity.toFixed(2)}}
+  ${borderGradient ? `borderGradient="${borderGradient}"\n  ` : ''}style={{ width: 'min(90vw, ${config.width}px)', height: '${config.height}px' }}
+/>`}</code></pre>
               </div>
             </div>
           </div>
@@ -2100,67 +1940,288 @@ export default function GlassNavbar() {
               </button>
             </div>
 
-            {/* Quick Start & Snell Physics Matrix */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
-              {/* Physics Formula Card */}
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
-                <span className="text-cyan-400 font-bold flex items-center gap-1.5">
-                  <Sparkles size={12} />
-                  Physical Snell Ray-Tracing
-                </span>
-                <p className="text-zinc-300 leading-relaxed font-sans text-xs">
-                  Refracts the live underlying DOM or Canvas buffer via hardware Snell vector equations with chromatic dispersion split:
-                </p>
-                <div className="p-2 rounded-lg bg-black/60 border border-white/10 text-cyan-300 text-[11px] select-all">
-                  n₁ · sin(θ₁) = n₂ · sin(θ₂) &nbsp; [Δλ = {(config.dispersion).toFixed(2)}]
-                </div>
-              </div>
-
-              {/* Zero-Dependency Integration */}
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
-                <span className="text-sky-400 font-bold flex items-center gap-1.5">
-                  <Package size={12} />
-                  Zero-Dependency Runtime
-                </span>
-                <p className="text-zinc-300 leading-relaxed font-sans text-xs">
-                  Drop into any React, Next.js, Vite or static HTML setup. Self-contained WebGL shader pipeline executes at 120 FPS.
-                </p>
-                <div className="p-2 rounded-lg bg-black/60 border border-white/10 text-zinc-300 text-[11px] select-all">
-                  npm i / copy-paste TSX module directly
-                </div>
-              </div>
+            {/* Categorized Documentation Tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/10 overflow-x-auto text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => setDocTab('quickstart')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  docTab === 'quickstart' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Sparkles size={13} />
+                <span>Quick Start</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDocTab('modes')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  docTab === 'modes' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Layers size={13} />
+                <span>Display Modes</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDocTab('props')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  docTab === 'props' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Sliders size={13} />
+                <span>Props & Variables</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDocTab('physics')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  docTab === 'physics' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Gauge size={13} />
+                <span>Snell Physics</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDocTab('npm')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  docTab === 'npm' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Package size={13} />
+                <span>Installation & Git</span>
+              </button>
             </div>
 
-            {/* Parameters Overview */}
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
-              <span className="text-zinc-300 font-bold text-xs">Current Active Configuration:</span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px] font-mono">
-                <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-zinc-400 block text-[9px]">REFRACTION</span>
-                  <span className="text-cyan-400 font-bold">{config.refraction}</span>
-                </div>
-                <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-zinc-400 block text-[9px]">BEVEL</span>
-                  <span className="text-cyan-400 font-bold">{config.bevel}px</span>
-                </div>
-                <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-zinc-400 block text-[9px]">DISPERSION</span>
-                  <span className="text-cyan-400 font-bold">{config.dispersion}</span>
-                </div>
-                <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-zinc-400 block text-[9px]">BLUR</span>
-                  <span className="text-cyan-400 font-bold">{config.blur}px</span>
-                </div>
-                <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-zinc-400 block text-[9px]">DARK TINT</span>
-                  <span className="text-cyan-400 font-bold">{config.darkTint}</span>
-                </div>
-                <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-zinc-400 block text-[9px]">RADIUS</span>
-                  <span className="text-cyan-400 font-bold">{config.radius >= 999 ? 'Capsule' : `${config.radius}px`}</span>
+            {/* TAB 1: Quick Start */}
+            {docTab === 'quickstart' && (
+              <div className="space-y-3 font-mono text-xs">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                  <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                    <Sparkles size={13} />
+                    One-Line Declarative Calls
+                  </span>
+                  <p className="text-zinc-300 font-sans text-xs leading-relaxed">
+                    Import <code className="text-cyan-300">LiquidGlass</code> and select one of the built-in modes. Every effect, lens curve, and viscoelastic spring works instantly with pristine defaults:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+                    <div className="p-2 rounded-lg bg-black/60 border border-white/10 space-y-1">
+                      <span className="text-zinc-400 text-[10px]">1. Flagship Responsive Navbar:</span>
+                      <code className="text-cyan-300 block select-all">&lt;LiquidGlass mode="nav" /&gt;</code>
+                    </div>
+                    <div className="p-2 rounded-lg bg-black/60 border border-white/10 space-y-1">
+                      <span className="text-zinc-400 text-[10px]">2. Elastic Drag Viscosity Typography:</span>
+                      <code className="text-cyan-300 block select-all">&lt;LiquidGlass mode="text" /&gt;</code>
+                    </div>
+                    <div className="p-2 rounded-lg bg-black/60 border border-white/10 space-y-1">
+                      <span className="text-zinc-400 text-[10px]">3. Cupertino Waves Glass Audio Player:</span>
+                      <code className="text-cyan-300 block select-all">&lt;LiquidGlass mode="player" /&gt;</code>
+                    </div>
+                    <div className="p-2 rounded-lg bg-black/60 border border-white/10 space-y-1">
+                      <span className="text-zinc-400 text-[10px]">4. Optical Container with Custom Children:</span>
+                      <code className="text-cyan-300 block select-all">&lt;LiquidGlass&gt;&lt;YourComponent /&gt;&lt;/LiquidGlass&gt;</code>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* TAB 2: Display Modes */}
+            {docTab === 'modes' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5">
+                  <span className="text-cyan-400 font-bold">mode="nav"</span>
+                  <p className="text-zinc-300 font-sans text-xs leading-relaxed">
+                    Features the flagship draggable liquid squircle lens with 1.76:1 aspect ratio, volumetric area-preserving jelly squash/stretch, 3D spherical dome curvature, and specular caustic glint sweep across icon strokes.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5">
+                  <span className="text-cyan-400 font-bold">mode="text"</span>
+                  <p className="text-zinc-300 font-sans text-xs leading-relaxed">
+                    Interactive typography that responds to horizontal drag. The capsule stretches with fluid give according to viscosity resistance and rebounds with viscoelastic damped spring physics.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5">
+                  <span className="text-cyan-400 font-bold">mode="player"</span>
+                  <p className="text-zinc-300 font-sans text-xs leading-relaxed">
+                    Cupertino Waves audio glass with animated music wave icon, track title, tactile play/pause toggle, and skip controls.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5">
+                  <span className="text-cyan-400 font-bold">mode="empty"</span>
+                  <p className="text-zinc-300 font-sans text-xs leading-relaxed">
+                    Wraps any arbitrary React children inside the pure physical liquid glass capsule, supporting hardware WebGL ray-tracing and multi-layer CSS optics.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: Props & Variables Matrix */}
+            {docTab === 'props' && (
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-3 font-mono text-xs">
+                <span className="text-zinc-300 font-bold text-xs block">Active Config vs Parameters Matrix:</span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]">
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-zinc-400 block text-[9px]">REFRACTION</span>
+                    <span className="text-cyan-400 font-bold">{config.refraction}</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-zinc-400 block text-[9px]">BEVEL</span>
+                    <span className="text-cyan-400 font-bold">{config.bevel}px</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-zinc-400 block text-[9px]">DISPERSION</span>
+                    <span className="text-cyan-400 font-bold">{config.dispersion}</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-zinc-400 block text-[9px]">BLUR</span>
+                    <span className="text-cyan-400 font-bold">{config.blur}px</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-zinc-400 block text-[9px]">DARK TINT</span>
+                    <span className="text-cyan-400 font-bold">{config.darkTint}</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-zinc-400 block text-[9px]">RADIUS</span>
+                    <span className="text-cyan-400 font-bold">{config.radius >= 999 ? 'Capsule' : `${config.radius}px`}</span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto text-[11px] text-zinc-300">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/10 text-zinc-400 text-[10px]">
+                        <th className="py-1 px-2">PROP</th>
+                        <th className="py-1 px-2">TYPE</th>
+                        <th className="py-1 px-2">DEFAULT</th>
+                        <th className="py-1 px-2">DESCRIPTION</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">mode</td>
+                        <td className="py-1.5 px-2 text-zinc-400">'nav' | 'text' | 'player' | 'empty'</td>
+                        <td className="py-1.5 px-2 text-zinc-400">'empty'</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Built-in showcase mode or custom container</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">refraction</td>
+                        <td className="py-1.5 px-2 text-zinc-400">number</td>
+                        <td className="py-1.5 px-2 text-zinc-400">0.35</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Snell's law ray-tracing refraction power</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">bevel</td>
+                        <td className="py-1.5 px-2 text-zinc-400">number</td>
+                        <td className="py-1.5 px-2 text-zinc-400">28</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Meniscus curvature width in pixels</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">dispersion</td>
+                        <td className="py-1.5 px-2 text-zinc-400">number</td>
+                        <td className="py-1.5 px-2 text-zinc-400">0.28</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Prism chromatic wavelength splitting</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">viscosity</td>
+                        <td className="py-1.5 px-2 text-zinc-400">number</td>
+                        <td className="py-1.5 px-2 text-zinc-400">0.60</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Fluid drag boundary tension resistance</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">shadowTone</td>
+                        <td className="py-1.5 px-2 text-zinc-400">'3d' | 'dark' | 'light'</td>
+                        <td className="py-1.5 px-2 text-zinc-400">'3d'</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Elevation shadow & ambient light personality</td>
+                      </tr>
+                      <tr>
+                        <td className="py-1.5 px-2 text-cyan-300 font-bold">isShadowInverted</td>
+                        <td className="py-1.5 px-2 text-zinc-400">boolean</td>
+                        <td className="py-1.5 px-2 text-zinc-400">false</td>
+                        <td className="py-1.5 px-2 font-sans text-xs">Converts shadow into 360° internal caustic aura</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: Snell Physics */}
+            {docTab === 'physics' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                  <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                    <Sparkles size={12} />
+                    Physical Snell Ray-Tracing
+                  </span>
+                  <p className="text-zinc-300 leading-relaxed font-sans text-xs">
+                    Refracts the live underlying buffer via hardware Snell vector equations with chromatic dispersion split:
+                  </p>
+                  <div className="p-2 rounded-lg bg-black/60 border border-white/10 text-cyan-300 text-[11px] select-all">
+                    n₁ · sin(θ₁) = n₂ · sin(θ₂) &nbsp; [Δλ = {(config.dispersion).toFixed(2)}]
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                  <span className="text-sky-400 font-bold flex items-center gap-1.5">
+                    <Gauge size={12} />
+                    Viscoelastic Spring Dynamics
+                  </span>
+                  <p className="text-zinc-300 leading-relaxed font-sans text-xs">
+                    Harmonic underdamped fluid damping equation governing drag tension and landing ripple:
+                  </p>
+                  <div className="p-2 rounded-lg bg-black/60 border border-white/10 text-sky-300 text-[11px] select-all">
+                    x(t) = 1 - e^(-ζωt) · [cos(ω_d t) + (ζ/√(1-ζ²)) sin(ω_d t)]
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: NPM & Git Installation */}
+            {docTab === 'npm' && (
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-3 font-mono text-xs">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-2.5 rounded-lg bg-black/60 border border-cyan-500/30 gap-2">
+                  <div className="flex items-center gap-2 text-cyan-200">
+                    <span className="text-zinc-500">$</span>
+                    <span className="font-bold select-all">npm i @mr-prog/liquid-glass</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('npm i @mr-prog/liquid-glass');
+                      setCopiedAction('copy-npm-doc');
+                      setTimeout(() => setCopiedAction(null), 2000);
+                    }}
+                    className="px-3 py-1 rounded-md bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[11px] border border-cyan-400/40"
+                  >
+                    {copiedAction === 'copy-npm-doc' ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-2.5 rounded-lg bg-black/60 border border-white/10 gap-2">
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <span className="text-zinc-500">$</span>
+                    <span className="select-all">npm i git+https://github.com/MR-PR0G/LiquidGlass.git</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('npm i git+https://github.com/MR-PR0G/LiquidGlass.git');
+                      setCopiedAction('copy-git-doc');
+                      setTimeout(() => setCopiedAction(null), 2000);
+                    }}
+                    className="px-3 py-1 rounded-md bg-white/10 hover:bg-white/20 text-zinc-300 text-[11px] border border-white/15"
+                  >
+                    {copiedAction === 'copy-git-doc' ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-zinc-400 text-[11px]">
+                  <span>Official Repository:</span>
+                  <a href="https://github.com/MR-PR0G/LiquidGlass" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">
+                    github.com/MR-PR0G/LiquidGlass
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

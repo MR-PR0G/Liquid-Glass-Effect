@@ -445,55 +445,40 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
       }}
       {...rest}
     >
-      {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Active if backdrop is attached) */}
-      {backdrop && (
-        <SoapBubbleSurface
-          backdrop={backdrop}
-          interactive={interactive}
-          wobble={wobble}
-          radius={radius}
-          topRadius={effectiveTopRadius}
-          bottomRadius={effectiveBottomRadius}
-          glass={1.0}
-          refraction={refraction}
-          bevel={bevel}
-          dispersion={dispersion}
-          blur={blur}
-          clearCenter={1.0}
-          reflectivity={reflectivity}
-          tint={darkTintRgba}
-          oilCoverage={0}
-          iridescence={0}
-          glintIntensity={0}
-          windowLight={false}
-          windowIntensity={0}
-          floorLight={0}
-          bottomShade={false}
-          keyLight={false}
-          className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
-          style={{
-            borderRadius: radiusCss,
-            backgroundColor: darkTintRgba,
-            border: borderOpacity <= 0 ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
-            backdropFilter: `blur(${blur}px)`,
-            WebkitBackdropFilter: `blur(${blur}px)`,
-          }}
-        />
-      )}
-
-      {/* 2. Pristine Multi-Layer CSS Liquid Glass Layer (Active when backdrop canvas is not attached) */}
-      {!backdrop && (
-        <div
-          className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
-          style={{
-            borderRadius: radiusCss,
-            backgroundColor: darkTintRgba,
-            border: borderOpacity <= 0 ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
-            backdropFilter: backdropFilterCss,
-            WebkitBackdropFilter: backdropFilterCss,
-          }}
-        />
-      )}
+      {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Always Active for True Physical Liquid Glass) */}
+      <SoapBubbleSurface
+        backdrop={backdrop}
+        interactive={interactive}
+        wobble={wobble}
+        radius={radius}
+        topRadius={effectiveTopRadius}
+        bottomRadius={effectiveBottomRadius}
+        glass={1.0}
+        refraction={refraction}
+        bevel={bevel}
+        dispersion={dispersion}
+        blur={blur}
+        clearCenter={1.0}
+        reflectivity={reflectivity}
+        tint={darkTintRgba}
+        oilCoverage={0}
+        oilOpacity={0}
+        iridescence={0}
+        glintIntensity={0}
+        windowLight={false}
+        windowIntensity={0}
+        floorLight={0}
+        bottomShade={false}
+        keyLight={false}
+        className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+        style={{
+          borderRadius: radiusCss,
+          backgroundColor: darkTintRgba,
+          border: borderOpacity <= 0 ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
+          backdropFilter: `blur(${effectiveBlur}px) saturate(1.8) brightness(1.10)`,
+          WebkitBackdropFilter: `blur(${effectiveBlur}px) saturate(1.8) brightness(1.10)`,
+        }}
+      />
 
       {/* 3. Gradient Border Overlay with CSS Mask Composite */}
       {borderGradient && borderOpacity > 0 && (

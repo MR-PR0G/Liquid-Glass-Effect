@@ -10,6 +10,7 @@
  */
 
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { Home, Search, Compass, Bell, type LucideIcon } from 'lucide-react';
 import { SoapBubbleSurface } from './soap-bubble-system';
 import type { SoapBubbleRenderer } from './soap-bubble-renderer';
 import { LiquidGlass, ShadowTone } from './LiquidGlass';
@@ -17,7 +18,7 @@ import { LiquidGlass, ShadowTone } from './LiquidGlass';
 export interface NavbarItem {
   id: string;
   label?: string;
-  icon?: any;
+  icon?: LucideIcon | React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }> | any;
   badge?: boolean | string | number;
   onClick?: () => void;
 }
@@ -79,40 +80,11 @@ export interface LiquidGlassNavbarProps {
   embedded?: boolean;
 }
 
-// Built-in minimalist SVG icons (ensures zero external dependencies)
-const HomeIcon: React.FC<{ size?: number; className?: string; strokeWidth?: number }> = ({ size = 22, className = '', strokeWidth = 2.2 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-    <polyline points="9 22 9 12 15 12 15 22"/>
-  </svg>
-);
-
-const SearchIcon: React.FC<{ size?: number; className?: string; strokeWidth?: number }> = ({ size = 22, className = '', strokeWidth = 2.2 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="11" cy="11" r="8"/>
-    <path d="m21 21-4.3-4.3"/>
-  </svg>
-);
-
-const CompassIcon: React.FC<{ size?: number; className?: string; strokeWidth?: number }> = ({ size = 22, className = '', strokeWidth = 2.2 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="12" cy="12" r="10"/>
-    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-  </svg>
-);
-
-const BellIcon: React.FC<{ size?: number; className?: string; strokeWidth?: number }> = ({ size = 22, className = '', strokeWidth = 2.2 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-  </svg>
-);
-
 const DEFAULT_DEMO_ITEMS: NavbarItem[] = [
-  { id: 'home', icon: HomeIcon, label: 'Home' },
-  { id: 'search', icon: SearchIcon, label: 'Search' },
-  { id: 'explore', icon: CompassIcon, label: 'Explore' },
-  { id: 'notifications', icon: BellIcon, label: 'Alerts', badge: true },
+  { id: 'home', icon: Home, label: 'Home' },
+  { id: 'search', icon: Search, label: 'Search' },
+  { id: 'explore', icon: Compass, label: 'Explore' },
+  { id: 'notifications', icon: Bell, label: 'Alerts', badge: true },
 ];
 
 export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
@@ -656,61 +628,66 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           zIndex: 20,
           transition: 'width 380ms cubic-bezier(0.22, 1, 0.36, 1), height 380ms cubic-bezier(0.22, 1, 0.36, 1), background-color 280ms ease, box-shadow 280ms ease, border 280ms ease',
           
-          border: isDragging ? '1px solid rgba(255, 255, 255, 0.38)' : '1px solid rgba(255, 255, 255, 0.22)',
+          border: (borderOpacity !== undefined && borderOpacity <= 0)
+            ? 'none'
+            : (isDragging ? '1px solid rgba(255, 255, 255, 0.32)' : '1px solid rgba(255, 255, 255, 0.16)'),
           backgroundColor: `rgba(6, 10, 18, ${lensDarkTint})`,
           backdropFilter: blur > 0
-            ? `blur(${blur}px) brightness(${isDragging ? 1.15 : 1.08})`
-            : `blur(3px) brightness(${isDragging ? 1.15 : 1.08})`,
+            ? `blur(${blur}px) brightness(${isDragging ? 1.08 : 1.04})`
+            : (isDragging ? 'blur(1px) brightness(1.06)' : 'none'),
           WebkitBackdropFilter: blur > 0
-            ? `blur(${blur}px) brightness(${isDragging ? 1.15 : 1.08})`
-            : `blur(3px) brightness(${isDragging ? 1.15 : 1.08})`,
+            ? `blur(${blur}px) brightness(${isDragging ? 1.08 : 1.04})`
+            : (isDragging ? 'blur(1px) brightness(1.06)' : 'none'),
 
           boxShadow: isDragging
-            ? 'inset 0 1.8px 2.2px rgba(255, 255, 255, 0.85), inset 0 -1.8px 2.2px rgba(0, 0, 0, 0.55), inset 0 0 18px rgba(0, 229, 255, 0.30), 0 14px 32px -4px rgba(0, 0, 0, 0.70), 0 0 24px rgba(0, 229, 255, 0.35)'
-            : 'inset 0 1.4px 2px rgba(255, 255, 255, 0.65), inset 0 -1.4px 2px rgba(0, 0, 0, 0.45), inset 0 0 12px rgba(0, 229, 255, 0.18), 0 6px 18px -2px rgba(0, 0, 0, 0.55), 0 0 14px rgba(0, 229, 255, 0.20)',
+            ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.75), inset 0 -1.5px 2px rgba(0, 0, 0, 0.50), 0 12px 28px -4px rgba(0, 0, 0, 0.65)'
+            : 'inset 0 1.2px 1.8px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40), 0 4px 14px -1px rgba(0, 0, 0, 0.45)',
         }}
       >
-        {/* Hardware WebGL Snell Ray-Tracing Layer (if canvas backdrop provided) */}
-        {backdropRef && (
-          <div className="absolute inset-0 w-full h-full pointer-events-none rounded-full overflow-hidden">
-            <SoapBubbleSurface
-              ref={lensSurfaceRef}
-              rendererRef={lensRendererRef}
-              backdrop={backdropRef as React.RefObject<HTMLElement | null>}
-              interactive={false}
-              wobble={0}
-              tilt={0}
-              radius={Math.round(currentHeight / 2)}
-              glass={1}
-              refraction={((thicknessStep ?? 5) >= 9 ? refraction * 2.85 : refraction) * 1.25}
-              bevel={Math.round(((thicknessStep ?? 5) >= 9 ? bevel * 2.3 : bevel) * 0.85)}
-              dispersion={dispersion}
-              blur={blur}
-              clearCenter={1}
-              oilCoverage={0}
-              oilOpacity={0}
-              iridescence={0}
-              glintIntensity={0}
-              reflectivity={0.0}
-              thickness={thickness}
-              windowLight={false}
-              windowIntensity={0}
-              floorLight={0}
-              bottomShade={false}
-              keyLight={false}
-              speed={0}
-              paused={false}
-              tint="transparent"
-              className="absolute inset-0 w-full h-full pointer-events-none rounded-full"
-            />
-          </div>
-        )}
+        {/* 1. Physical Snell Ray-Tracing Layer (WebGL wallpaper refraction & curved meniscus dome) */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none rounded-full overflow-hidden"
+          style={{ borderRadius: '9999px' }}
+        >
+          <SoapBubbleSurface
+            ref={lensSurfaceRef}
+            rendererRef={lensRendererRef}
+            backdrop={backdropRef as React.RefObject<HTMLElement | null>}
+            interactive={false}
+            wobble={0}
+            tilt={0}
+            radius={Math.round(currentHeight / 2)}
+            glass={1}
+            refraction={((thicknessStep ?? 5) >= 9 ? refraction * 2.85 : refraction) * 1.25}
+            bevel={Math.round(((thicknessStep ?? 5) >= 9 ? bevel * 2.3 : bevel) * 0.85)}
+            dispersion={0}
+            blur={blur}
+            clearCenter={1}
+            oilCoverage={0}
+            oilOpacity={0}
+            iridescence={0}
+            glintIntensity={0}
+            reflectivity={0.0}
+            thickness={thickness}
+            windowLight={false}
+            windowIntensity={0}
+            floorLight={0}
+            bottomShade={false}
+            keyLight={false}
+            speed={0}
+            paused={false}
+            tint="transparent"
+            className="absolute inset-0 w-full h-full pointer-events-none rounded-full"
+            style={{ borderRadius: '9999px' }}
+          />
+        </div>
 
-        {/* Dynamic Optical Caustic Radial Light Pool (پخش نور کریستالی درون لنز) */}
-        <div 
-          className="absolute inset-0 pointer-events-none rounded-full"
+        {/* 1.5. Lens Dark Tint Absorption Layer - strictly above WebGL canvas (Requirement 1: constant dark depth) */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none rounded-full"
           style={{
-            background: `radial-gradient(circle at center, rgba(0, 229, 255, ${isDragging ? 0.36 : 0.24}) 0%, rgba(14, 165, 233, 0.08) 55%, transparent 75%)`,
+            borderRadius: '9999px',
+            backgroundColor: `rgba(4, 7, 14, ${lensDarkTint})`,
           }}
         />
 

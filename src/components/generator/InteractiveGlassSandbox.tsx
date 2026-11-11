@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { LiquidGlassConfig, DEFAULT_GLASS_STEPS, ShadowTone } from '../../types';
-import { notifyBackdropChanged } from '../soap-bubble';
+import { LiquidGlassConfig, DEFAULT_GLASS_STEPS, ShadowTone, computeGlassBoxShadow, computeInvertedGlassAura } from '../../types';
+import { SoapBubbleSurface, notifyBackdropChanged } from '../soap-bubble';
 import { generateNodeReactCode, generateSeparatedExportCode } from '../../utils/exportCode';
 import { createSolidEngine } from '../shape-physics/solid-engine';
 import { shapeDefaults } from '../shape-physics/shape-settings';
-import { LiquidGlass } from '../../../liquid-glass-react/src/LiquidGlass';
+import { LiquidGlassNavbar } from '../navbar';
 import { 
   Sliders, 
   Gauge, 
@@ -30,6 +30,9 @@ import {
   BookOpen, 
   X, 
   Plus, 
+  Play,
+  SkipForward,
+  Music,
   Link2, 
   Unlink 
 } from 'lucide-react';
@@ -110,6 +113,14 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
     { id: 'chrome', name: 'Liquid Chrome', gradient: 'linear-gradient(135deg, #ffffff, #94a3b8, #ffffff, #475569)', previewStyle: 'bg-gradient-to-tr from-white via-slate-400 to-zinc-600' },
   ];
 
+  const hexToRgba = (hex: string, alpha: number) => {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.substring(0, 2), 16) || 0;
+    const g = parseInt(clean.substring(2, 4), 16) || 0;
+    const b = parseInt(clean.substring(4, 6), 16) || 0;
+    return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+  };
+
   const maxCapsuleRadius = Math.max(1, Math.round(config.height / 2));
   const stepToRadiusPx = (step: number) => {
     if (step <= 0) return 0;
@@ -119,8 +130,16 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
 
   const topRadiusPx = stepToRadiusPx(topRadiusStep);
   const bottomRadiusPx = stepToRadiusPx(bottomRadiusStep);
+  const radiusCss = topRadiusPx === bottomRadiusPx
+    ? `${topRadiusPx}px`
+    : `${topRadiusPx}px ${topRadiusPx}px ${bottomRadiusPx}px ${bottomRadiusPx}px`;
+
+  const darkTintRgba = config.darkTint > 0 ? hexToRgba(tintColor, config.darkTint) : 'transparent';
   const currentBorderPreset = BORDER_PRESETS.find(p => p.id === borderPreset);
   const borderGradient = currentBorderPreset?.gradient;
+  const borderColorRgba = borderPreset === 'custom'
+    ? hexToRgba(customBorderColor, config.borderOpacity)
+    : `rgba(255, 255, 255, ${config.borderOpacity})`;
   
   // Bounded concise scroll parameters: responsive, snappy, no endless empty space
   // - MIN_SCROLL (-85): Prevents scrolling down into excessive empty black space below text
@@ -1514,39 +1533,169 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
 
         {/* ================= ZONE B: LIQUID GLASS OBSERVATION STAGE ================= */}
         {/* Anchored neatly below with ample clearance so Controls never overlaps */}
-        {/* Uses the official @mr-prog/liquid-glass module directly with live backdrop refraction */}
         <div className="relative z-20 pb-4 sm:pb-8 px-4 flex items-center justify-center pointer-events-none">
-          <LiquidGlass
-            backdrop={canvasRef}
-            mode={innerContentMode}
-            refraction={config.thicknessStep >= 9 ? config.refraction * 2.85 : config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75)}
-            bevel={Math.round(config.thicknessStep >= 9 ? config.bevel * 2.3 : config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55))}
-            dispersion={config.dispersion}
-            blur={config.blur}
-            darkTint={config.darkTint}
-            tintColor={tintColor}
-            thickness={config.thickness}
-            thicknessStep={config.thicknessStep}
-            viscosity={config.viscosity}
-            viscosityStep={config.viscosityStep}
-            radius={maxCapsuleRadius}
-            topRadius={topRadiusPx}
-            bottomRadius={bottomRadiusPx}
-            borderOpacity={config.borderOpacity}
-            borderGradient={borderGradient}
-            shadowStep={config.shadowStep}
-            shadowTone={shadowTone}
-            isShadowInverted={isShadowInverted}
-            tensionX={panelTensionX}
-            onTension={setPanelTensionX}
-            activeIndex={activeNavTab}
-            onChange={setActiveNavTab}
-            className="pointer-events-auto h-[clamp(46px,min(var(--capsule-h),88px),88px)] sm:h-[var(--capsule-h)]"
+          <div
+            className="flex items-center justify-center relative pointer-events-auto h-[clamp(46px,min(var(--capsule-h),88px),88px)] sm:h-[var(--capsule-h)]"
             style={{
               ['--capsule-h' as any]: `${config.height}px`,
               width: `min(90vw, ${config.width}px)`,
+              borderRadius: radiusCss,
+              backgroundColor: darkTintRgba,
+              boxShadow: computeGlassBoxShadow(config.shadowStep, shadowTone, config.borderOpacity, config.thicknessStep, isShadowInverted),
+              transform: `translate3d(${panelTensionX}px, 0, 0)`,
+              transition: panelTensionX !== 0
+                ? 'none'
+                : (config.viscosityStep >= 7
+                    ? 'transform 240ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms ease, height 300ms ease'
+                    : config.viscosityStep <= 3
+                    ? 'transform 640ms cubic-bezier(0.12, 1.68, 0.28, 1), width 300ms ease, height 300ms ease'
+                    : 'transform 420ms cubic-bezier(0.16, 1.25, 0.3, 1), width 300ms ease, height 300ms ease'),
             }}
-          />
+          >
+            {/* The Real WebGL Physical Snell Refraction Layer - Clean Pure Glass, NO fake white streaks */}
+            <SoapBubbleSurface
+              backdrop={canvasRef}
+              interactive={false}
+              wobble={0}
+              tilt={0}
+              radius={maxCapsuleRadius}
+              topRadius={topRadiusPx}
+              bottomRadius={bottomRadiusPx}
+              glass={config.glass}
+              refraction={(config.thicknessStep >= 9 ? config.refraction * 2.85 : config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75))}
+              bevel={Math.round((config.thicknessStep >= 9 ? config.bevel * 2.3 : config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55)))}
+              dispersion={config.dispersion}
+              blur={config.blur}
+              clearCenter={config.clearCenter}
+              paused={selectedWallpaper !== 'shapes'}
+              speed={selectedWallpaper === 'shapes' ? 0.8 : 0}
+              
+              oilCoverage={0}
+              oilOpacity={0}
+              iridescence={0}
+              glintIntensity={0}
+              reflectivity={0.0}
+              thickness={config.thickness}
+              windowLight={false}
+              windowIntensity={0}
+              floorLight={0}
+              bottomShade={false}
+              keyLight={false}
+              tint={darkTintRgba}
+
+              className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+              style={{
+                borderRadius: radiusCss,
+                backgroundColor: darkTintRgba,
+                border: (config.borderStep === 0 || config.borderOpacity <= 0) ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
+                backdropFilter: `blur(${config.blur}px)`,
+                WebkitBackdropFilter: `blur(${config.blur}px)`,
+              }}
+            />
+
+            {/* Gradient border overlay with CSS mask-composite for curved glass */}
+            {borderGradient && config.borderStep > 0 && config.borderOpacity > 0 && (
+              <div
+                className="absolute inset-0 pointer-events-none rounded-[inherit]"
+                style={{
+                  borderRadius: radiusCss,
+                  padding: '1px',
+                  background: borderGradient,
+                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'xor',
+                  maskComposite: 'exclude',
+                  opacity: Math.min(1.0, (config.borderStep / 10) * 0.95),
+                  zIndex: 3,
+                  transition: 'opacity 200ms ease, background 200ms ease',
+                }}
+              />
+            )}
+
+            {/* Inverted Curvature Light / Shadow Aura Layer - strictly on top of WebGL canvas, below content */}
+            <div
+              className="absolute inset-0 w-full h-full pointer-events-none rounded-[inherit]"
+              style={{
+                borderRadius: radiusCss,
+                boxShadow: isShadowInverted ? computeInvertedGlassAura(config.shadowStep, shadowTone, config.borderOpacity) : 'none',
+                opacity: isShadowInverted ? 1 : 0,
+                zIndex: 4,
+                transition: 'box-shadow 200ms ease, opacity 200ms ease',
+              }}
+            />
+
+            {/* Interactive Inner Content Layer: 100% sharp in flat core, strictly contained */}
+            <div className={`relative z-10 flex items-center justify-center w-full h-full select-none ${innerContentMode === 'nav' ? 'overflow-visible px-1' : 'overflow-hidden px-4'} rounded-[inherit]`}>
+              {innerContentMode === 'text' && (
+                <div 
+                  className="flex items-center justify-center w-full h-full cursor-grab active:cursor-grabbing select-none"
+                  onPointerDown={(e) => {
+                    const startX = e.clientX;
+                    const onMove = (ev: PointerEvent) => {
+                      const dx = ev.clientX - startX;
+                      // Dynamic stiffness from viscosity:
+                      const stiffness = 0.14 + (config.viscosityStep / 10) * 1.8;
+                      const tension = (dx / (1 + Math.abs(dx) * 0.026 * stiffness)) * 0.55;
+                      setPanelTensionX(tension);
+                    };
+                    const onUp = () => {
+                      window.removeEventListener('pointermove', onMove);
+                      window.removeEventListener('pointerup', onUp);
+                      setPanelTensionX(0);
+                    };
+                    window.addEventListener('pointermove', onMove);
+                    window.addEventListener('pointerup', onUp);
+                  }}
+                  title="Drag horizontally to test fluid elastic viscosity"
+                >
+                  <span className="font-mono text-xs sm:text-sm md:text-base lg:text-lg font-bold tracking-[0.28em] text-zinc-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] uppercase truncate max-w-full">
+                    LIQUID GLASS
+                  </span>
+                </div>
+              )}
+
+              {innerContentMode === 'nav' && (
+                <div className="relative flex items-center justify-center w-full h-full pointer-events-auto">
+                  <LiquidGlassNavbar
+                    activeIndex={activeNavTab}
+                    onChange={setActiveNavTab}
+                    onTension={setPanelTensionX}
+                    backdropRef={canvasRef}
+                    darkTint={config.darkTint}
+                    darkTintStep={config.darkTintStep}
+                    refraction={config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75)}
+                    bevel={Math.round(config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55))}
+                    viscosity={config.viscosity}
+                    viscosityStep={config.viscosityStep}
+                    thickness={config.thickness}
+                    thicknessStep={config.thicknessStep}
+                    shadowStep={config.shadowStep}
+                    shadowTone={shadowTone}
+                    borderOpacity={config.borderOpacity}
+                    blur={config.blur}
+                  />
+                </div>
+              )}
+
+              {innerContentMode === 'player' && (
+                <div className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto">
+                  <div className="flex items-center gap-2">
+                    <Music size={15} className="text-cyan-400 animate-pulse" />
+                    <span className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 truncate max-w-[130px] sm:max-w-[190px]">
+                      Cupertino Waves
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button className="p-1 rounded-full hover:bg-white/20 transition-all text-white" title="Play">
+                      <Play size={14} className="fill-white" />
+                    </button>
+                    <button className="p-1 rounded-full hover:bg-white/20 transition-all text-zinc-400 hover:text-white" title="Next">
+                      <SkipForward size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Sleek Minimalist Vertical Scroll Indicator (Hidden for Shape Physics which is non-scrolling) */}

@@ -322,33 +322,40 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
 
       // Harmonic underdamped fluid spring dynamic to viscosity:
       const vNorm = Math.min(10, Math.max(0, viscStepRef.current)) / 10;
-      const fluidFactor = Math.pow(1 - vNorm, 1.4);
-      const omega = 12 + fluidFactor * 8;
-      const zeta = 0.50 + vNorm * 0.40;
+      const fluidFactor = Math.pow(1 - vNorm, 1.4); // 1.0 (ultra-fluid) to 0.0 (viscous)
 
-      const decay = Math.exp(-zeta * omega * t);
-      const osc = Math.cos(omega * Math.sqrt(Math.max(0.01, 1 - zeta * zeta)) * t);
-      const smoothPosition = 1 - decay * (osc + (zeta / Math.sqrt(Math.max(0.01, 1 - zeta * zeta))) * Math.sin(omega * Math.sqrt(Math.max(0.01, 1 - zeta * zeta)) * t));
+      // Damping tau: 2.3 for fluid (gentle fluid settle) to 5.6 for viscous
+      const tau = 2.3 + vNorm * 3.3;
+      // Oscillation omega: 8.6 for fluid to 5.0 for viscous
+      const omega = 8.6 - vNorm * 3.6;
+      const springEase = t === 1 
+        ? 1 
+        : 1 - Math.exp(-tau * t) * (Math.cos(omega * t) + (tau / omega) * Math.sin(omega * t));
 
-      const nextX = startX + distance * smoothPosition;
+      const nextX = startX + distance * springEase;
       setBubbleCenterX(nextX);
       lensRendererRef.current?.invalidate();
 
-      // Fluid aerodynamic stretch during flight:
-      const flightSpeed = decay * Math.sin(omega * t);
-      const stretchAmount = (distance / 350) * flightSpeed * (0.35 + fluidFactor * 0.45);
-      setFlightStretch(Math.max(-0.25, Math.min(0.35, stretchAmount)));
-
-      // Landing viscoelastic jelly ripple on arrival:
-      if (progress > 0.45) {
-        const landingProgress = (progress - 0.45) / 0.55;
-        const rippleOmega = 18 + fluidFactor * 10;
-        const rippleZeta = 0.35 + vNorm * 0.45;
-        const rippleDecay = Math.exp(-rippleZeta * rippleOmega * landingProgress);
-        const rippleWave = Math.sin(rippleOmega * landingProgress) * rippleDecay;
-        const rippleIntensity = Math.min(0.24, Math.abs(distance) / 450) * (0.5 + fluidFactor * 0.8);
-        setJellyWobble(rippleWave * rippleIntensity);
+      // Fluid elongation in flight:
+      let flight = 0;
+      if (t < 0.65) {
+        const maxFlight = 0.03 + fluidFactor * 0.15;
+        flight = Math.sin((t / 0.65) * Math.PI) * maxFlight;
       }
+
+      // On arrival (t >= 0.42): Smooth-envelope viscoelastic jelly ripple
+      let wobble = 0;
+      if (t >= 0.42) {
+        const settleT = (t - 0.42) / 0.58;
+        const wobbleAmp = 0.018 + fluidFactor * 0.165;
+        const wobbleFreq = (2.2 + fluidFactor * 2.2) * Math.PI;
+        const wobbleDecay = 1.8 + vNorm * 3.2;
+        const smoothEnv = Math.sin(settleT * Math.PI);
+        wobble = -Math.sin(settleT * wobbleFreq) * Math.exp(-settleT * wobbleDecay) * (0.35 + 0.65 * smoothEnv) * wobbleAmp;
+      }
+
+      setFlightStretch(flight);
+      setJellyWobble(wobble);
 
       if (progress < 1) {
         animRafRef.current = requestAnimationFrame(frame);
@@ -698,14 +705,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             />
           </div>
         )}
-
-        {/* 3D Convex Dome Surface Highlight */}
-        <div 
-          className="absolute inset-0 pointer-events-none rounded-full"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 18%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.08) 45%, transparent 70%)',
-          }}
-        />
 
         {/* Dynamic Optical Caustic Radial Light Pool (پخش نور کریستالی درون لنز) */}
         <div 

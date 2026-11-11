@@ -421,16 +421,26 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
     return children;
   };
 
+  const isPresetMode = mode === 'nav' || mode === 'text' || mode === 'player';
+  const resolvedHeight = style.height || (isPresetMode ? '74px' : undefined);
+  const resolvedWidth = style.width || (isPresetMode ? '100%' : undefined);
+  const resolvedMaxWidth = style.maxWidth || (isPresetMode ? '560px' : undefined);
+
   return (
     <div
       ref={ref}
       className={`relative select-none flex items-center justify-center ${className}`}
       style={{
+        height: resolvedHeight,
+        minHeight: resolvedHeight,
+        width: resolvedWidth,
+        maxWidth: resolvedMaxWidth,
         borderRadius: radiusCss,
         backgroundColor: darkTintRgba,
         boxShadow: glassShadow,
         transform: `translate3d(${currentTensionX}px, 0, 0)`,
         transition: transitionTiming,
+        boxSizing: 'border-box',
         ...style,
       }}
       {...rest}

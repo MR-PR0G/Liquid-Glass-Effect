@@ -249,10 +249,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       const vNorm = Math.min(10, Math.max(0, viscStepRef.current)) / 10;
       const fluidFactor = Math.pow(1 - vNorm, 1.4); // 1.0 (ultra-fluid) to 0.0 (viscous)
 
-      // Damping tau: 2.3 for fluid (gentle fluid settle) to 5.6 for viscous
-      const tau = 2.3 + vNorm * 3.3;
-      // Oscillation omega: 8.6 for fluid to 5.0 for viscous
-      const omega = 8.6 - vNorm * 3.6;
+      // Silky smooth fluid spring: tau: 2.0 (fluid) to 3.8 (viscous)
+      const tau = 2.0 + vNorm * 2.2;
+      // Oscillation omega: 9.2 (fluid) to 6.2 (viscous)
+      const omega = 9.2 - vNorm * 3.0;
       const springEase = t === 1 
         ? 1 
         : 1 - Math.exp(-tau * t) * (Math.cos(omega * t) + (tau / omega) * Math.sin(omega * t));
@@ -263,19 +263,19 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
 
       // Fluid elongation in flight:
       let flight = 0;
-      if (t < 0.65) {
+      if (t < 0.68) {
         // Fluid stretches dynamically up to +18%
-        const maxFlight = 0.03 + fluidFactor * 0.15;
-        flight = Math.sin((t / 0.65) * Math.PI) * maxFlight;
+        const maxFlight = 0.035 + fluidFactor * 0.16;
+        flight = Math.sin((t / 0.68) * Math.PI) * maxFlight;
       }
 
-      // On arrival (t >= 0.42): Smooth-envelope viscoelastic jelly ripple
+      // On arrival (t >= 0.40): Smooth-envelope viscoelastic jelly ripple
       let wobble = 0;
-      if (t >= 0.42) {
-        const settleT = (t - 0.42) / 0.58; // 0 to 1
-        const wobbleAmp = 0.018 + fluidFactor * 0.165;
+      if (t >= 0.40) {
+        const settleT = (t - 0.40) / 0.60; // 0 to 1
+        const wobbleAmp = 0.02 + fluidFactor * 0.18;
         const wobbleFreq = (2.2 + fluidFactor * 2.2) * Math.PI;
-        const wobbleDecay = 1.8 + vNorm * 3.2;
+        const wobbleDecay = 1.6 + vNorm * 2.6;
         // Smooth envelope guarantees C1 continuous derivative at entry and exit
         const smoothEnv = Math.sin(settleT * Math.PI);
         wobble = -Math.sin(settleT * wobbleFreq) * Math.exp(-settleT * wobbleDecay) * (0.35 + 0.65 * smoothEnv) * wobbleAmp;
@@ -756,12 +756,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             const totalScaleX = baseScale * iconBounce * microStretchX;
             const totalScaleY = baseScale * iconBounce * microCompressY;
 
-            // 3. Meniscus Caustic Arc Light Sweep (Starts at corner, sweeps to center):
-            const glintOffset = -signedEdge * 4.8;
-            const glintIntensity = edgeFactor * 0.95 + coreFactor * 0.35;
-            const lightCenterX = Math.max(10, Math.min(90, Math.round(50 - signedEdge * 38)));
-            const lightCenterY = Math.round(50 - edgeFactor * 14);
-
             return (
               <div
                 key={`refracted-${item.id}`}
@@ -773,27 +767,13 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                   opacity: 1, // Naturally clipped by lens capsule overflow-hidden with zero blur dip
                 }}
               >
-                {/* Dynamic Curved Optical Light Sweep (Shifts with lens angle like real curved liquid glass) */}
                 <div
-                  className="absolute pointer-events-none rounded-full"
-                  style={{
-                    width: `${iconSize * 1.85}px`,
-                    height: `${iconSize * 1.85}px`,
-                    background: `radial-gradient(circle at ${lightCenterX}% ${lightCenterY}%, rgba(0, 229, 255, ${0.34 * (coreFactor * 0.65 + edgeFactor * 0.45)}) 0%, rgba(14, 165, 233, 0.09) 45%, transparent 70%)`,
-                    opacity: Math.max(coreFactor, edgeFactor * 0.88),
-                    transform: `scale(${0.92 + coreFactor * 0.18 + jellyWobble * 0.15})`,
-                    transition: (isAnimating || isDragging) ? 'none' : 'opacity 220ms ease, transform 220ms ease',
-                  }}
-                />
-
-                <div
-                  className="relative flex items-center justify-center text-[#00e5ff] font-bold"
+                  className="relative flex items-center justify-center text-zinc-100 font-bold"
                   style={{
                     // Rich 3D spherical liquid glass meniscus curvature & organic settle dance
                     transform: `perspective(180px) translate3d(${microPullX}px, 0, 0) rotateX(${domeCurvatureY}deg) rotateY(${domeCurvatureX}deg) rotateZ(${danceTwistZ}deg) skewX(${microSkewX}deg) scale(${totalScaleX}, ${totalScaleY})`,
                     transformOrigin: 'center center',
-                    // Dynamic curved specular glint sweep across icon strokes as curved corner glides over
-                    filter: `drop-shadow(0 0 ${3 + coreFactor * 6}px rgba(0, 229, 255, ${0.75 + coreFactor * 0.25})) drop-shadow(${glintOffset}px 0 ${1.5 + edgeFactor * 1.5}px rgba(0, 240, 255, ${glintIntensity})) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))`,
+                    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))',
                     transition: (isAnimating || isDragging) ? 'none' : 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1)',
                     willChange: 'transform',
                     isolation: 'isolate',
@@ -816,8 +796,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           style={{
             borderRadius: '9999px',
             boxShadow: isDragging
-              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28), inset 0 0 14px rgba(0, 229, 255, 0.22)'
-              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15), inset 0 0 10px rgba(0, 229, 255, 0.15)',
+              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28)'
+              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15)',
             transition: 'box-shadow 260ms ease',
           }}
         />

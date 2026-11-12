@@ -1,86 +1,49 @@
-/**
- * @file LiquidGlassNavbar.tsx
- * @author MR PROG (https://github.com/MR-PR0G)
- * @license MIT
- * @repository https://github.com/MR-PR0G/LiquidGlass
- * 
- * Flagship Liquid Glass Navbar component by MR PROG.
- * Features viscoelastic drag physics, 3D meniscus wave refraction,
- * caustic light sweep, and autonomous self-contained liquid glass capsule.
- */
-
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { Home, Search, Compass, Bell, type LucideIcon } from 'lucide-react';
+import { Home, Search, Compass, Bell, LucideIcon } from 'lucide-react';
 import { SoapBubbleSurface } from './soap-bubble-system';
 import type { SoapBubbleRenderer } from './soap-bubble-renderer';
-import { LiquidGlass, ShadowTone } from './LiquidGlass';
+import { LiquidGlass, type ShadowTone } from './LiquidGlass';
+
 
 export interface NavbarItem {
   id: string;
+  icon: LucideIcon | React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  badge?: boolean;
   label?: string;
-  icon?: LucideIcon | React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }> | any;
-  badge?: boolean | string | number;
-  onClick?: () => void;
 }
 
 export interface LiquidGlassNavbarProps {
-  /** Array of items to display in navbar. Defaults to the 4 flagship demo icons: Home, Search, Explore, Alerts */
   items?: NavbarItem[];
-  /** Controlled active item index */
   activeIndex?: number;
-  /** Uncontrolled initial active index (default 0) */
-  defaultIndex?: number;
-  /** Callback fired when active item changes */
-  onChange?: (index: number, item: NavbarItem) => void;
-  /** Callback fired during boundary drag tension */
+  onChange?: (index: number) => void;
   onTension?: (tensionX: number) => void;
-  /** Custom CSS classes for the outer glass container */
   className?: string;
-  /** Custom inline style for the outer glass container */
   style?: React.CSSProperties;
-  /** Custom accent color for refracted icon glow & specular glint (default #00e5ff) */
-  accentColor?: string;
-  /** Optional HTMLCanvasElement backdrop for hardware Snell ray-tracing */
   backdropRef?: React.RefObject<HTMLCanvasElement | null>;
-  /** Translucent glass body dark tint (0.0 = crystal clear to 1.0 = deep obsidian, default 0.16) */
   darkTint?: number;
-  /** Dark tint discrete step (0 to 10) */
   darkTintStep?: number;
-  /** Optical refraction bending power (default 0.34) */
   refraction?: number;
-  /** Meniscus border curvature width in px (default 28) */
   bevel?: number;
-  /** Fluid viscosity & spring resistance (0.10 to 1.00, default 0.60) */
+  saturation?: number;
+  specular?: number;
   viscosity?: number;
-  /** Viscosity discrete step (0 to 10, default 5) */
   viscosityStep?: number;
-  /** Lens volumetric thickness in px (default 450) */
   thickness?: number;
-  /** Thickness discrete step (0 to 10, default 5) */
   thicknessStep?: number;
-  /** Chromatic dispersion prism intensity (default 0.28) */
-  dispersion?: number;
-  /** Concentric Gaussian frosted diffusion blur in px (default 0, falls back gracefully to 14px in CSS) */
-  blur?: number;
-  /** Border stroke opacity (default 0.18) */
-  borderOpacity?: number;
-  /** Optional custom CSS gradient string for chromatic glass rim */
-  borderGradient?: string;
-  /** 3D elevation shadow personality: dark, light, or 3d (default 3d) */
-  shadowTone?: ShadowTone;
-  /** Shadow elevation intensity (0 to 10, default 5) */
+  fresnel?: number;
+  iridescence?: number;
   shadowStep?: number;
-  /** Invert shadow into internal 360° caustic refraction aura */
+  shadowTone?: ShadowTone;
+  borderOpacity?: number;
+  blur?: number;
+  borderGradient?: string;
   isShadowInverted?: boolean;
-  /** Outer capsule height in pixels (default 74) */
   height?: number;
-  /** Outer capsule max width in pixels (default 560) */
   maxWidth?: number;
-  /** When true, renders only the inner track without the outer capsule container */
   embedded?: boolean;
 }
 
-const DEFAULT_DEMO_ITEMS: NavbarItem[] = [
+const DEFAULT_NAVBAR_ITEMS: NavbarItem[] = [
   { id: 'home', icon: Home, label: 'Home' },
   { id: 'search', icon: Search, label: 'Search' },
   { id: 'explore', icon: Compass, label: 'Explore' },
@@ -88,16 +51,14 @@ const DEFAULT_DEMO_ITEMS: NavbarItem[] = [
 ];
 
 export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
-  items = DEFAULT_DEMO_ITEMS,
+  items = DEFAULT_NAVBAR_ITEMS,
   activeIndex: controlledIndex,
-  defaultIndex = 0,
   onChange,
   onTension,
   className = '',
   style = {},
-  accentColor = '#00e5ff',
   backdropRef,
-  darkTint = 0.16,
+  darkTint = 0.2,
   darkTintStep,
   refraction = 0.34,
   bevel = 28,
@@ -105,7 +66,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   viscosityStep = 5,
   thickness = 450,
   thicknessStep = 5,
-  dispersion = 0.28,
   blur = 0,
   borderOpacity = 0.18,
   borderGradient,
@@ -116,14 +76,14 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   maxWidth = 560,
   embedded = false,
 }) => {
-  const [internalIndex, setInternalIndex] = useState(defaultIndex);
+  const [internalIndex, setInternalIndex] = useState(0);
   const activeIndex = controlledIndex !== undefined ? controlledIndex : internalIndex;
 
   const trackRef = useRef<HTMLDivElement>(null);
   const lensRendererRef = useRef<SoapBubbleRenderer | null>(null);
   const lensSurfaceRef = useRef<HTMLElement | null>(null);
   const [trackWidth, setTrackWidth] = useState(0);
-  const [trackHeight, setTrackHeight] = useState(height);
+  const [trackHeight, setTrackHeight] = useState(0);
 
   // Drag & Physics states
   const [isDragging, setIsDragging] = useState(false);
@@ -132,7 +92,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   const [dragStretchX, setDragStretchX] = useState(0);
   const [jellyWobble, setJellyWobble] = useState(0);
   const [flightStretch, setFlightStretch] = useState(0);
-  const [panelTensionX, setPanelTensionX] = useState(0);
 
   const pointerStateRef = useRef<{
     startX: number;
@@ -165,8 +124,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     const updateDimensions = () => {
       if (trackRef.current) {
         const rect = trackRef.current.getBoundingClientRect();
-        if (rect.width > 0) setTrackWidth(rect.width);
-        if (rect.height > 0) setTrackHeight(rect.height);
+        setTrackWidth(rect.width);
+        setTrackHeight(rect.height);
       }
     };
 
@@ -203,7 +162,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   );
 
   // 1. Smart Responsive Resting Geometry:
-  const rawH = trackHeight || height || 74;
+  // Proportional vertical padding ensures the resting lens always sits perfectly balanced in any bar height.
+  const rawH = trackHeight || 56;
   const restingHeight = useMemo(() => {
     const verticalPadding = Math.max(4, Math.min(8, Math.round(rawH * 0.095)));
     return Math.max(36, rawH - verticalPadding * 2);
@@ -218,6 +178,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   }, [restingHeight, slotWidth]);
 
   // 2. Smart Responsive Grabbed Geometry:
+  // Strictly preserves the EXACT same aspect ratio as resting state (restingWidth / restingHeight).
+  // Multiplied by uniform scaleMultiplier so it never distorts, surfboards, or changes proportion!
   const grabbedHeight = useMemo(() => {
     const protrusionY = Math.max(5, Math.min(8, Math.round(rawH * 0.10)));
     return rawH + protrusionY * 2;
@@ -228,15 +190,19 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     return Math.round(restingWidth * scaleMultiplier);
   }, [restingWidth, restingHeight, grabbedHeight]);
 
+  // Physical geometry of current state
   const currentWidth = isDragging ? grabbedWidth : restingWidth;
   const currentHeight = isDragging ? grabbedHeight : restingHeight;
 
-  // Proportional icon size matching generator
+  // Dynamically responsive icon size proportional to the resting lens height
   const iconSize = useMemo(() => {
-    return Math.max(21, Math.min(32, Math.round(restingHeight * 0.50)));
+    return Math.max(21, Math.min(34, Math.round(restingHeight * 0.52)));
   }, [restingHeight]);
 
   // Volumetric Jelly Physics Engine:
+  // Dynamically preserves 2D area (deltaX * deltaY ≈ constant)
+  // During drag: responds to inertia & mouse velocity stretch + corner boundary resistance
+  // During landing: multi-wave viscoelastic jelly ripple
   const activeScaleX = isDragging
     ? squashScaleX + dragStretchX
     : (1 + flightStretch + jellyWobble);
@@ -257,11 +223,12 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     return Math.max(hardMinCenterX, Math.round(trackWidth - currentWidth / 2 - edgePadding));
   }, [hardMinCenterX, trackWidth, currentWidth]);
 
-  // Synchronized Position Engine:
+  // 100% Synchronized Position Engine:
   const [bubbleCenterX, setBubbleCenterX] = useState<number>(() => getSlotCenterX(activeIndex));
   const bubbleCenterXRef = useRef(bubbleCenterX);
   bubbleCenterXRef.current = bubbleCenterX;
 
+  // Animation controller & dynamic viscosity ref
   const animRafRef = useRef<number | null>(null);
   const viscStepRef = useRef(viscosityStep);
   viscStepRef.current = viscosityStep;
@@ -296,32 +263,34 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       const vNorm = Math.min(10, Math.max(0, viscStepRef.current)) / 10;
       const fluidFactor = Math.pow(1 - vNorm, 1.4); // 1.0 (ultra-fluid) to 0.0 (viscous)
 
-      // Damping tau: 2.3 for fluid (gentle fluid settle) to 5.6 for viscous
-      const tau = 2.3 + vNorm * 3.3;
-      // Oscillation omega: 8.6 for fluid to 5.0 for viscous
-      const omega = 8.6 - vNorm * 3.6;
+      // Silky smooth fluid spring: tau: 2.0 (fluid) to 3.8 (viscous)
+      const tau = 2.0 + vNorm * 2.2;
+      // Oscillation omega: 9.2 (fluid) to 6.2 (viscous)
+      const omega = 9.2 - vNorm * 3.0;
       const springEase = t === 1 
         ? 1 
         : 1 - Math.exp(-tau * t) * (Math.cos(omega * t) + (tau / omega) * Math.sin(omega * t));
 
-      const nextX = startX + distance * springEase;
-      setBubbleCenterX(nextX);
+      const currentX = startX + distance * springEase;
+      setBubbleCenterX(currentX);
       lensRendererRef.current?.invalidate();
 
       // Fluid elongation in flight:
       let flight = 0;
-      if (t < 0.65) {
-        const maxFlight = 0.03 + fluidFactor * 0.15;
-        flight = Math.sin((t / 0.65) * Math.PI) * maxFlight;
+      if (t < 0.68) {
+        // Fluid stretches dynamically up to +18%
+        const maxFlight = 0.035 + fluidFactor * 0.16;
+        flight = Math.sin((t / 0.68) * Math.PI) * maxFlight;
       }
 
-      // On arrival (t >= 0.42): Smooth-envelope viscoelastic jelly ripple
+      // On arrival (t >= 0.40): Smooth-envelope viscoelastic jelly ripple
       let wobble = 0;
-      if (t >= 0.42) {
-        const settleT = (t - 0.42) / 0.58;
-        const wobbleAmp = 0.018 + fluidFactor * 0.165;
+      if (t >= 0.40) {
+        const settleT = (t - 0.40) / 0.60; // 0 to 1
+        const wobbleAmp = 0.02 + fluidFactor * 0.18;
         const wobbleFreq = (2.2 + fluidFactor * 2.2) * Math.PI;
-        const wobbleDecay = 1.8 + vNorm * 3.2;
+        const wobbleDecay = 1.6 + vNorm * 2.6;
+        // Smooth envelope guarantees C1 continuous derivative at entry and exit
         const smoothEnv = Math.sin(settleT * Math.PI);
         wobble = -Math.sin(settleT * wobbleFreq) * Math.exp(-settleT * wobbleDecay) * (0.35 + 0.65 * smoothEnv) * wobbleAmp;
       }
@@ -344,36 +313,214 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     animRafRef.current = requestAnimationFrame(frame);
   }, []);
 
-  // Update bubble position if active index changes from outside
+  // Sync position on external activeIndex change (clicks, touch, or parent scroll)
+  const prevActiveRef = useRef(activeIndex);
   useEffect(() => {
-    if (trackWidth > 0 && !isDragging) {
-      animateTo(getSlotCenterX(activeIndex), 400);
+    if (prevActiveRef.current !== activeIndex) {
+      prevActiveRef.current = activeIndex;
+      if (!isDragging) {
+        const targetX = getSlotCenterX(activeIndex);
+        animateTo(targetX, 400);
+      }
     }
-  }, [activeIndex, trackWidth, getSlotCenterX, animateTo, isDragging]);
+  }, [activeIndex, getSlotCenterX, isDragging, animateTo]);
 
-  // Clean-up on unmount
+  useEffect(() => {
+    if (!isDragging && animRafRef.current === null) {
+      const targetX = getSlotCenterX(activeIndex);
+      setBubbleCenterX(targetX);
+      lensRendererRef.current?.invalidate();
+    }
+  }, [trackWidth, activeIndex, getSlotCenterX, isDragging]);
+
   useEffect(() => {
     return () => {
-      if (animRafRef.current !== null) cancelAnimationFrame(animRafRef.current);
-      if (moveRafRef.current !== null) cancelAnimationFrame(moveRafRef.current);
+      if (animRafRef.current !== null) {
+        cancelAnimationFrame(animRafRef.current);
+      }
+      if (moveRafRef.current !== null) {
+        cancelAnimationFrame(moveRafRef.current);
+      }
     };
   }, []);
 
-  // Update capsule tension state and call onTension
-  const applyTension = useCallback((tX: number) => {
-    setPanelTensionX(tX);
-    onTension?.(tX);
-  }, [onTension]);
+  // Window pointer listeners callbacks with 120 FPS requestAnimationFrame batching
+  const onWindowPointerMove = useCallback((e: PointerEvent) => {
+    const state = pointerStateRef.current;
+    if (!state.isActive) return;
 
-  // Pointer dragging handler
+    lastPointerEventRef.current = e;
+
+    if (!state.hasMoved) {
+      const dx = e.clientX - state.startX;
+      const dy = e.clientY - state.startY;
+      if (Math.hypot(dx, dy) > 3) {
+        state.hasMoved = true;
+        if (!isDragging) {
+          setIsDragging(true);
+        }
+      }
+    }
+
+    if (!moveRafRef.current) {
+      moveRafRef.current = requestAnimationFrame(() => {
+        moveRafRef.current = null;
+        const ev = lastPointerEventRef.current;
+        if (!ev || !state.isActive) return;
+
+        if (state.isDirectOnBubble || state.hasMoved) {
+          const now = performance.now();
+          const dt = now - lastTimeRef.current;
+          if (dt > 8) {
+            const rawVx = (ev.clientX - lastXRef.current) / dt;
+            velocityRef.current = velocityRef.current * 0.60 + rawVx * 0.40;
+            lastXRef.current = ev.clientX;
+            lastTimeRef.current = now;
+
+            // Fluid dynamic velocity inertia stretch (Requirement 3):
+            const vNorm = viscStepRef.current / 10;
+            const fluidFactor = Math.pow(1 - vNorm, 1.3);
+            const dynamicStretch = Math.min(0.18, Math.abs(velocityRef.current) * 0.08 * fluidFactor);
+            setDragStretchX(dynamicStretch);
+          }
+
+          const dx = ev.clientX - state.startX;
+          const rawTargetX = state.centerStartX + dx;
+          let targetCenterX = rawTargetX;
+          let sX = 1;
+          let tension = 0;
+
+          // 2-Stage Liquid Physics Boundary Resistance (Softer yield for fluid, firm for viscous):
+          const stiffness = 0.20 + Math.pow(viscosity, 1.8) * 3.2;
+          const yieldFactor = 1 / stiffness;
+
+          if (rawTargetX < hardMinCenterX) {
+            const overshoot = hardMinCenterX - rawTargetX;
+            if (overshoot <= 18) {
+              const progress = overshoot / 18;
+              targetCenterX = hardMinCenterX - progress * 2.2 * yieldFactor;
+              sX = 1 - progress * 0.035 * yieldFactor;
+              tension = -progress * 4.0 * Math.min(1.6, stiffness);
+            } else {
+              const extra = overshoot - 18;
+              const extraOvershoot = Math.min(3.2, Math.pow(extra, 0.42) * 0.7) * yieldFactor;
+              targetCenterX = hardMinCenterX - (2.2 * yieldFactor) - extraOvershoot;
+              sX = (1 - 0.035 * yieldFactor) - Math.min(0.06, Math.pow(extra, 0.38) * 0.012 * yieldFactor);
+              tension = -(4.0 + Math.min(4.0, Math.pow(extra, 0.45) * 0.8)) * Math.min(1.6, stiffness);
+            }
+          } else if (rawTargetX > hardMaxCenterX) {
+            const overshoot = rawTargetX - hardMaxCenterX;
+            if (overshoot <= 18) {
+              const progress = overshoot / 18;
+              targetCenterX = hardMaxCenterX + progress * 2.2 * yieldFactor;
+              sX = 1 - progress * 0.035 * yieldFactor;
+              tension = progress * 4.0 * Math.min(1.6, stiffness);
+            } else {
+              const extra = overshoot - 18;
+              const extraOvershoot = Math.min(3.2, Math.pow(extra, 0.42) * 0.7) * yieldFactor;
+              targetCenterX = hardMaxCenterX + (2.2 * yieldFactor) + extraOvershoot;
+              sX = (1 - 0.035 * yieldFactor) - Math.min(0.06, Math.pow(extra, 0.38) * 0.012 * yieldFactor);
+              tension = (4.0 + Math.min(4.0, Math.pow(extra, 0.45) * 0.8)) * Math.min(1.6, stiffness);
+            }
+          }
+
+          setBubbleCenterX(targetCenterX);
+          lensRendererRef.current?.invalidate();
+          setSquashScaleX(sX);
+
+          // Only notify parent when tension actually changes across the elastic edge
+          if (Math.abs(tension - lastTensionRef.current) > 0.05 || (tension === 0 && lastTensionRef.current !== 0)) {
+            lastTensionRef.current = tension;
+            onTension?.(tension);
+          }
+        }
+      });
+    }
+  }, [hardMinCenterX, hardMaxCenterX, onTension, isDragging, viscosity]);
+
+  const onWindowPointerUp = useCallback((e: PointerEvent) => {
+    window.removeEventListener('pointermove', onWindowPointerMove);
+    window.removeEventListener('pointerup', onWindowPointerUp);
+    window.removeEventListener('pointercancel', onWindowPointerUp);
+
+    if (moveRafRef.current !== null) {
+      cancelAnimationFrame(moveRafRef.current);
+      moveRafRef.current = null;
+    }
+    lastTensionRef.current = 0;
+
+    const state = pointerStateRef.current;
+    if (!state.isActive) return;
+    state.isActive = false;
+
+    if (state.hasMoved) {
+      // User dragged across the bar!
+      const vx = velocityRef.current;
+      const speed = Math.abs(vx);
+      let finalIdx = activeIndex;
+
+      // Realistic fling physics: hard flick can propel up to 2 tabs away
+      if (speed > 0.28) {
+        const direction = Math.sign(vx);
+        const steps = speed > 0.85 ? 2 : 1;
+        finalIdx = Math.max(0, Math.min(numItems - 1, activeIndex + direction * steps));
+      } else {
+        const relativeSlot = (bubbleCenterXRef.current - sidePadding) / slotWidth - 0.5;
+        finalIdx = Math.max(0, Math.min(numItems - 1, Math.round(relativeSlot)));
+      }
+
+      setIsDragging(false);
+      setSquashScaleX(1);
+      setDragStretchX(0);
+      onTension?.(0);
+
+      if (controlledIndex === undefined) {
+        setInternalIndex(finalIdx);
+      }
+      onChange?.(finalIdx);
+
+      // Smoothly spring-glide into destination slot with warm jelly settle
+      const targetX = getSlotCenterX(finalIdx);
+      animateTo(targetX, 380);
+    } else if (state.isDirectOnBubble) {
+      // User grabbed the bubble and released in place without dragging:
+      // Softly contracts back to resting size!
+      setIsDragging(false);
+      setSquashScaleX(1);
+      setDragStretchX(0);
+      onTension?.(0);
+    } else {
+      // User clicked or tapped another tab!
+      // isDragging was NEVER true, so NO flash or swelling occurred!
+      if (trackRef.current) {
+        const rect = trackRef.current.getBoundingClientRect();
+        const clickX = e.clientX - rect.left - sidePadding;
+        const clickedIdx = Math.max(0, Math.min(numItems - 1, Math.floor(clickX / slotWidth)));
+
+        if (controlledIndex === undefined) {
+          setInternalIndex(clickedIdx);
+        }
+        onChange?.(clickedIdx);
+
+        // Glide immediately with warm jelly spring physics
+        animateTo(getSlotCenterX(clickedIdx), 380);
+      }
+    }
+  }, [activeIndex, controlledIndex, getSlotCenterX, numItems, onChange, onTension, sidePadding, slotWidth, animateTo, onWindowPointerMove]);
+
+  // Pointer down on track initiates interaction
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
     if (!trackRef.current) return;
+
+    // Use track-relative local coordinates for 100% accurate hit-testing across all devices
     const rect = trackRef.current.getBoundingClientRect();
     const localX = e.clientX - rect.left;
-
     const currentX = bubbleCenterXRef.current;
     const bubbleHalfW = currentWidth / 2;
     const distToBubbleCenter = Math.abs(localX - currentX);
+
+    // Direct hit test: did the user click/touch directly on the bubble?
     const isDirectOnBubble = distToBubbleCenter <= bubbleHalfW + 6;
 
     if (animRafRef.current !== null) {
@@ -398,171 +545,50 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     velocityRef.current = 0;
 
     if (isDirectOnBubble) {
+      // User clicked/touched directly on the bubble!
+      // Enlarge IMMEDIATELY and softly right under their finger!
       setIsDragging(true);
     }
-
-    const onWindowPointerMove = (ev: PointerEvent) => {
-      if (!pointerStateRef.current.isActive) return;
-      lastPointerEventRef.current = ev;
-
-      if (moveRafRef.current === null) {
-        moveRafRef.current = requestAnimationFrame(() => {
-          moveRafRef.current = null;
-          const currentEv = lastPointerEventRef.current;
-          if (!currentEv || !pointerStateRef.current.isActive) return;
-
-          const dx = currentEv.clientX - pointerStateRef.current.startX;
-          const dy = currentEv.clientY - pointerStateRef.current.startY;
-
-          if (!pointerStateRef.current.hasMoved) {
-            if (Math.hypot(dx, dy) > 4) {
-              pointerStateRef.current.hasMoved = true;
-              setIsDragging(true);
-            } else {
-              return;
-            }
-          }
-
-          // Measure pointer velocity for inertial squash & stretch:
-          const now = performance.now();
-          const dt = Math.max(1, now - lastTimeRef.current);
-          const instVel = (currentEv.clientX - lastXRef.current) / dt;
-          velocityRef.current = velocityRef.current * 0.70 + instVel * 0.30;
-          lastXRef.current = currentEv.clientX;
-          lastTimeRef.current = now;
-
-          // Target unconstrained position
-          const rawTargetX = pointerStateRef.current.centerStartX + dx;
-
-          // Boundary tension resistance
-          let clampedX = rawTargetX;
-          let boundaryOvershoot = 0;
-
-          if (rawTargetX < hardMinCenterX) {
-            boundaryOvershoot = rawTargetX - hardMinCenterX;
-            const stiffness = 0.14 + (viscStepRef.current / 10) * 1.8;
-            clampedX = hardMinCenterX + (boundaryOvershoot / (1 + Math.abs(boundaryOvershoot) * 0.026 * stiffness));
-          } else if (rawTargetX > hardMaxCenterX) {
-            boundaryOvershoot = rawTargetX - hardMaxCenterX;
-            const stiffness = 0.14 + (viscStepRef.current / 10) * 1.8;
-            clampedX = hardMaxCenterX + (boundaryOvershoot / (1 + Math.abs(boundaryOvershoot) * 0.026 * stiffness));
-          }
-
-          setBubbleCenterX(clampedX);
-          lensRendererRef.current?.invalidate();
-
-          // Elastic capsule tension response (Requirement: full-container viscosity give)
-          const tension = boundaryOvershoot !== 0 ? (boundaryOvershoot * 0.28) : (dx * 0.04);
-          if (Math.abs(tension - lastTensionRef.current) > 0.1) {
-            lastTensionRef.current = tension;
-            applyTension(tension);
-          }
-
-          // Dynamic fluid stretch along velocity vector
-          const v = velocityRef.current;
-          const velStretch = Math.max(-0.25, Math.min(0.35, v * 0.08));
-          setDragStretchX(velStretch);
-
-          // Boundary corner squash resistance
-          if (boundaryOvershoot !== 0) {
-            const compression = Math.max(0.72, 1 - Math.abs(boundaryOvershoot) * 0.0035);
-            setSquashScaleX(compression);
-          } else {
-            setSquashScaleX(1);
-          }
-        });
-      }
-    };
-
-    const onWindowPointerUp = (ev: PointerEvent) => {
-      window.removeEventListener('pointermove', onWindowPointerMove);
-      window.removeEventListener('pointerup', onWindowPointerUp);
-      window.removeEventListener('pointercancel', onWindowPointerUp);
-
-      if (moveRafRef.current !== null) {
-        cancelAnimationFrame(moveRafRef.current);
-        moveRafRef.current = null;
-      }
-
-      applyTension(0);
-      lastTensionRef.current = 0;
-      setIsDragging(false);
-      setSquashScaleX(1);
-      setDragStretchX(0);
-
-      const hadMoved = pointerStateRef.current.hasMoved;
-      pointerStateRef.current.isActive = false;
-
-      if (!hadMoved) {
-        // Direct tap selection
-        if (!trackRef.current) return;
-        const r = trackRef.current.getBoundingClientRect();
-        const tapX = ev.clientX - r.left;
-
-        let bestIndex = 0;
-        let bestDist = Infinity;
-        for (let i = 0; i < numItems; i++) {
-          const d = Math.abs(tapX - getSlotCenterX(i));
-          if (d < bestDist) {
-            bestDist = d;
-            bestIndex = i;
-          }
-        }
-
-        if (controlledIndex === undefined) setInternalIndex(bestIndex);
-        onChange?.(bestIndex, items[bestIndex]);
-        items[bestIndex]?.onClick?.();
-        animateTo(getSlotCenterX(bestIndex), 400);
-      } else {
-        // Find closest slot factoring inertia
-        const v = velocityRef.current;
-        const currentX = bubbleCenterXRef.current;
-        const projectedX = currentX + v * 90;
-
-        let bestIndex = 0;
-        let bestDist = Infinity;
-        for (let i = 0; i < numItems; i++) {
-          const d = Math.abs(projectedX - getSlotCenterX(i));
-          if (d < bestDist) {
-            bestDist = d;
-            bestIndex = i;
-          }
-        }
-
-        if (controlledIndex === undefined) setInternalIndex(bestIndex);
-        onChange?.(bestIndex, items[bestIndex]);
-        items[bestIndex]?.onClick?.();
-        animateTo(getSlotCenterX(bestIndex), 420);
-      }
-    };
 
     window.addEventListener('pointermove', onWindowPointerMove, { passive: true });
     window.addEventListener('pointerup', onWindowPointerUp);
     window.addEventListener('pointercancel', onWindowPointerUp);
   };
 
-  // Lens dark tint is always +1 step deeper than base glass
-  const computedDarkTintStep = darkTintStep !== undefined ? darkTintStep : Math.round(darkTint * 10);
-  const lensDarkTint = Math.min(0.85, ((computedDarkTintStep + 1) / 10) * 0.75);
+  // Parent liquid glass background dark tint step (0 - 10):
+  const parentStep = typeof darkTintStep === 'number'
+    ? Math.min(10, Math.max(0, darkTintStep))
+    : (typeof darkTint === 'number' ? Math.round((darkTint / 0.75) * 10) : 2);
 
-  // The inner track content
+  // User requirement 1: Lens dark tint is minimum 1, and always exactly 1 number higher than its parent (0->1, 10->11)
+  // Constant, unwavering deep dark tint whether resting or grabbed!
+  const lensDarkTintStep = Math.max(1, parentStep + 1);
+  const lensDarkTint = Number(((lensDarkTintStep / 10) * 0.78).toFixed(3));
+
   const trackContent = (
     <div
       ref={trackRef}
       onPointerDown={handlePointerDown}
       onWheel={(e) => e.stopPropagation()}
-      className="relative w-full h-full select-none touch-none cursor-grab active:cursor-grabbing"
-      style={{ touchAction: 'none' }}
+      className={`relative w-full h-full select-none touch-none cursor-grab active:cursor-grabbing ${className}`}
+      style={{
+        height: `${height || 74}px`,
+        minHeight: `${height || 74}px`,
+        touchAction: 'none',
+        ...style,
+      }}
     >
-      {/* 1. Base Track Icons (Stable resting layer, yields cleanly as lens approaches) */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none flex items-center">
+      {/* 1. Base Track Icons (Stable resting layer across the tab bar, always visible until lens covers them) */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none">
         {items.map((item, idx) => {
+          const Icon = item.icon;
           const iconCenterX = getSlotCenterX(idx);
           const deltaX = iconCenterX - bubbleCenterX;
           const bubbleHalfW = currentWidth / 2;
           const u = bubbleHalfW > 0 ? deltaX / bubbleHalfW : 0;
           const absU = Math.abs(u);
 
+          // Base track icon yields smoothly right as the lens corner reaches it (|u| <= 1.0)
           const baseOpacity = absU >= 1.0
             ? 1.0
             : Math.max(0, Math.pow(Math.max(0, (absU - 0.15) / 0.85), 1.6));
@@ -585,9 +611,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                if (controlledIndex === undefined) setInternalIndex(idx);
-                onChange?.(idx, item);
-                item.onClick?.();
+                if (controlledIndex === undefined) {
+                  setInternalIndex(idx);
+                }
+                onChange?.(idx);
                 animateTo(getSlotCenterX(idx), 400);
               }}
               title={item.label}
@@ -601,12 +628,9 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                   willChange: 'transform, opacity',
                 }}
               >
-                {renderIcon(item.icon, iconSize)}
+                <Icon size={iconSize} strokeWidth={2.0} className="group-hover:text-zinc-200 transition-colors duration-150" />
                 {item.badge && baseOpacity > 0.1 && (
-                  <span 
-                    className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor]"
-                    style={{ backgroundColor: accentColor }}
-                  />
+                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00e5ff]" />
                 )}
               </div>
             </div>
@@ -615,6 +639,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       </div>
 
       {/* 2. Draggable Liquid Glass Bubble / Pill Lens */}
+      {/* Unified container locked to top: 50% with transformOrigin: center center - ZERO vertical drop */}
       <div
         className="absolute pointer-events-none overflow-hidden will-change-transform rounded-full"
         style={{
@@ -626,11 +651,15 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           transformOrigin: 'center center',
           borderRadius: '9999px',
           zIndex: 20,
+          // Always smooth fluid size and styling transitions (fixes stiff jump on tab release)
           transition: 'width 380ms cubic-bezier(0.22, 1, 0.36, 1), height 380ms cubic-bezier(0.22, 1, 0.36, 1), background-color 280ms ease, box-shadow 280ms ease, border 280ms ease',
-          
+
+          // Outer border: subtle rim when resting, crisp highlight when grabbed
           border: (borderOpacity !== undefined && borderOpacity <= 0)
             ? 'none'
             : (isDragging ? '1px solid rgba(255, 255, 255, 0.32)' : '1px solid rgba(255, 255, 255, 0.16)'),
+
+          // Requirement 1: Lens dark tint is always +1 step darker than parent back glass (unwavering when grabbed)
           backgroundColor: `rgba(6, 10, 18, ${lensDarkTint})`,
           backdropFilter: blur > 0
             ? `blur(${blur}px) brightness(${isDragging ? 1.08 : 1.04})`
@@ -639,6 +668,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             ? `blur(${blur}px) brightness(${isDragging ? 1.08 : 1.04})`
             : (isDragging ? 'blur(1px) brightness(1.06)' : 'none'),
 
+          // Crisp 3D lens elevation and inner specular highlight
           boxShadow: isDragging
             ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.75), inset 0 -1.5px 2px rgba(0, 0, 0, 0.50), 0 12px 28px -4px rgba(0, 0, 0, 0.65)'
             : 'inset 0 1.2px 1.8px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40), 0 4px 14px -1px rgba(0, 0, 0, 0.45)',
@@ -691,87 +721,82 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           }}
         />
 
-        {/* 3. Refracted Optical Icon Layer (Continuous Corner Meniscus Wave + 3D Spherical Curvature) */}
+        {/* 2. Refracted Optical Content Layer (Strictly clipped inside the real bubble capsule!) */}
         <div className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 35 }}>
           {items.map((item, idx) => {
+            const Icon = item.icon;
             const iconCenterX = getSlotCenterX(idx);
+
+            // Real physical distance from active animated bubble center to this icon (1:1 screen pixels)
             const deltaX = iconCenterX - bubbleCenterX;
             const bubbleHalfW = currentWidth / 2;
-            const u = bubbleHalfW > 0 ? deltaX / bubbleHalfW : 0;
+            const u = deltaX / bubbleHalfW;
             const absU = Math.abs(u);
 
+            // Skip rendering if outside lens influence for peak mobile GPU efficiency
             if (absU > 1.25) return null;
 
+            // Mathematical continuous progression:
+            // Starts at MAXIMUM at the corner (u = +/-1.0) and smoothly finishes at ZERO at the center (u = 0.0)
             const clampedU = Math.max(-1, Math.min(1, u));
             const signedEdge = Math.sin((Math.PI / 2) * clampedU);
             const edgeFactor = Math.pow(Math.abs(clampedU), 1.20);
+
+            // Core presence factor: 1 at dead center, 0 at corners
             const coreFactor = Math.pow(Math.cos(Math.abs(clampedU) * (Math.PI / 2)), 1.35);
 
+            // Base scale:
+            // Resting: 1.00 (standard factory size)
+            // Grabbed: exactly 1.10
             const baseScale = isDragging ? 1.10 : 1.00;
+
+            // 1. Rich Meniscus Corner Curvature (Starts at peak at corner, finishes at center):
+            // Elastic radial stretch along curved meniscus lip (up to 20% right at the corner):
             const microStretchX = 1.0 + edgeFactor * 0.20;
+            // Transverse micro-compression preserving liquid volume:
             const microCompressY = 1.0 - edgeFactor * 0.07;
+            // Smooth continuous optical shift (peaks at corner, vanishes to 0 at center):
             const microPullX = signedEdge * 3.5;
-            const domeCurvatureY = -edgeFactor * 11.0;
-            const domeCurvatureX = signedEdge * 12.0;
-            const danceTwistZ = jellyWobble * 2.8;
+            // 3D Spherical Dome curvature: convex bulge bowing toward viewer in 3D perspective
+            const domeCurvatureY = -edgeFactor * 11.0; // X-axis dome arching
+            const domeCurvatureX = signedEdge * 12.0;  // Y-axis dome turning
+            // Liquid astigmatic shear:
             const microSkewX = -signedEdge * 5.5;
 
+            // 2. Dynamic Liquid Resonance on Settle:
             const iconBounce = 1.0 + coreFactor * 0.06 + jellyWobble * 0.26;
+            const danceTwistZ = jellyWobble * 2.8;
+
             const totalScaleX = baseScale * iconBounce * microStretchX;
             const totalScaleY = baseScale * iconBounce * microCompressY;
-
-            const glintOffset = -signedEdge * 4.8;
-            const glintIntensity = edgeFactor * 0.95 + coreFactor * 0.35;
-            const lightCenterX = Math.max(10, Math.min(90, Math.round(50 - signedEdge * 38)));
-            const lightCenterY = Math.round(50 - edgeFactor * 14);
 
             return (
               <div
                 key={`refracted-${item.id}`}
-                className="absolute flex items-center justify-center"
+                className="absolute top-0 bottom-0 h-full flex items-center justify-center pointer-events-none"
                 style={{
-                  top: 0,
-                  bottom: 0,
-                  height: '100%',
                   left: `calc(50% + ${deltaX}px)`,
                   transform: 'translate3d(-50%, 0, 0)',
                   width: `${slotWidth}px`,
-                  opacity: 1,
-                  willChange: 'transform',
+                  opacity: 1, // Naturally clipped by lens capsule overflow-hidden with zero blur dip
                 }}
               >
-                {/* Dynamic Curved Optical Light Sweep */}
                 <div
-                  className="absolute pointer-events-none rounded-full"
+                  className="relative flex items-center justify-center text-zinc-100 font-bold"
                   style={{
-                    width: `${iconSize * 1.85}px`,
-                    height: `${iconSize * 1.85}px`,
-                    background: `radial-gradient(circle at ${lightCenterX}% ${lightCenterY}%, rgba(0, 229, 255, ${0.34 * (coreFactor * 0.65 + edgeFactor * 0.45)}) 0%, rgba(14, 165, 233, 0.09) 45%, transparent 70%)`,
-                    opacity: Math.max(coreFactor, edgeFactor * 0.88),
-                    transform: `scale(${0.92 + coreFactor * 0.18 + jellyWobble * 0.15})`,
-                    transition: (isAnimating || isDragging) ? 'none' : 'opacity 220ms ease, transform 220ms ease',
-                  }}
-                />
-
-                <div
-                  className="relative flex items-center justify-center font-bold"
-                  style={{
-                    color: accentColor,
+                    // Rich 3D spherical liquid glass meniscus curvature & organic settle dance
                     transform: `perspective(180px) translate3d(${microPullX}px, 0, 0) rotateX(${domeCurvatureY}deg) rotateY(${domeCurvatureX}deg) rotateZ(${danceTwistZ}deg) skewX(${microSkewX}deg) scale(${totalScaleX}, ${totalScaleY})`,
                     transformOrigin: 'center center',
-                    filter: `drop-shadow(0 0 ${3 + coreFactor * 6}px ${accentColor}) drop-shadow(${glintOffset}px 0 ${1.5 + edgeFactor * 1.5}px rgba(0, 240, 255, ${glintIntensity})) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))`,
+                    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))',
                     transition: (isAnimating || isDragging) ? 'none' : 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1)',
                     willChange: 'transform',
                     isolation: 'isolate',
                     backfaceVisibility: 'hidden',
                   }}
                 >
-                  {renderIcon(item.icon, iconSize)}
+                  <Icon size={iconSize} strokeWidth={2.2} />
                   {item.badge && (
-                    <span 
-                      className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor]"
-                      style={{ backgroundColor: accentColor }}
-                    />
+                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00e5ff]" />
                   )}
                 </div>
               </div>
@@ -779,14 +804,14 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           })}
         </div>
 
-        {/* 4. Natural Inner Specular Rim */}
+        {/* 4. Natural Inner Glass Rim (Internal Specular Bevel & Caustic Reflection Layer) */}
         <div
           className="absolute inset-0 pointer-events-none rounded-full"
           style={{
             borderRadius: '9999px',
             boxShadow: isDragging
-              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.75), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28), inset 0 0 14px rgba(0, 229, 255, 0.22)'
-              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15), inset 0 0 10px rgba(0, 229, 255, 0.15)',
+              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28)'
+              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15)',
             transition: 'box-shadow 260ms ease',
           }}
         />
@@ -794,20 +819,18 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     </div>
   );
 
-  // If embedded in a parent container (e.g. InteractiveGlassSandbox), render track directly
   if (embedded) {
     return trackContent;
   }
 
-  // Standalone mode: wrap inside the flagship LiquidGlass optical container!
   return (
     <LiquidGlass
       backdrop={backdropRef}
       refraction={refraction}
       bevel={bevel}
-      dispersion={dispersion}
       blur={blur}
       darkTint={darkTint}
+      darkTintStep={darkTintStep}
       thickness={thickness}
       thicknessStep={thicknessStep}
       viscosity={viscosity}
@@ -818,7 +841,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       shadowStep={shadowStep}
       shadowTone={shadowTone}
       isShadowInverted={isShadowInverted}
-      tensionX={panelTensionX}
       className={`mx-auto ${className}`}
       style={{
         height: `${height}px`,
@@ -837,14 +859,3 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
     </LiquidGlass>
   );
 };
-
-// Robust component & element renderer
-function renderIcon(Icon: any, size: number): React.ReactNode {
-  if (!Icon) return null;
-  if (React.isValidElement(Icon)) return Icon;
-  if (typeof Icon === 'function' || (typeof Icon === 'object' && Icon !== null)) {
-    const Component = Icon;
-    return <Component size={size} strokeWidth={2.2} />;
-  }
-  return null;
-}

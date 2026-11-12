@@ -1395,4 +1395,5 @@ function runFrame(now: number) {
   runningTasks = tasks;
   for (const task of tasks) task(now);
   tasks.clear();
+  clearFrameRects();
 }

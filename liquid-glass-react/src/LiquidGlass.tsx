@@ -155,6 +155,8 @@ export interface LiquidGlassProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   blur?: number;
   /** Translucent dark tint opacity (0.0 = crystal clear, 0.2 = smoked, default 0.16) */
   darkTint?: number;
+  /** Dark tint discrete step (0 to 10) */
+  darkTintStep?: number;
   /** Base tint color hex (default #000000) */
   tintColor?: string;
   /** Volumetric dome depth / thickness in nanometers (150 to 750, default 450) */
@@ -228,6 +230,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   dispersion = 0.28,
   blur = 0,
   darkTint = 0.16,
+  darkTintStep,
   tintColor = '#000000',
   thickness = 450,
   thicknessStep = 5,
@@ -297,27 +300,36 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   // Inner content renderer based on mode
   const renderInnerContent = () => {
     if (mode === 'nav') {
+      const numericH = typeof resolvedHeight === 'number' ? resolvedHeight : parseInt(resolvedHeight || '74', 10) || 74;
       return (
-        <div className="relative flex items-center justify-center w-full h-full pointer-events-auto px-1">
+        <div 
+          className="relative flex items-center justify-center w-full pointer-events-auto px-1"
+          style={{ height: `${numericH}px`, minHeight: `${numericH}px` }}
+        >
           <LiquidGlassNavbar
             embedded={true}
+            height={numericH}
             items={items}
             activeIndex={activeIndex}
-            defaultIndex={defaultIndex}
-            onChange={onChange}
+            onChange={(idx) => {
+              if (onChange && items && items[idx]) {
+                (onChange as any)(idx, items[idx]);
+              } else if (onChange) {
+                (onChange as any)(idx);
+              }
+            }}
             onTension={handleTension}
             backdropRef={backdrop as React.RefObject<HTMLCanvasElement | null>}
             darkTint={darkTint}
-            refraction={refraction}
-            bevel={bevel}
+            darkTintStep={Math.round(darkTint * 10)}
+            refraction={refraction * (0.70 + (thicknessStep / 10) * 0.75)}
+            bevel={Math.round(bevel * (0.75 + (thicknessStep / 10) * 0.55))}
             viscosity={viscosity}
             viscosityStep={viscosityStep}
             thickness={thickness}
             thicknessStep={thicknessStep}
-            dispersion={dispersion}
             blur={blur}
             borderOpacity={borderOpacity}
-            accentColor={accentColor}
             shadowTone={shadowTone}
             shadowStep={shadowStep}
           />
@@ -513,9 +525,10 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 
       {/* 5. Content Container */}
       <div 
-        className={`relative z-10 w-full h-full rounded-[inherit] flex items-center justify-center ${
+        className={`relative z-10 w-full rounded-[inherit] flex items-center justify-center ${
           mode === 'nav' ? 'overflow-visible' : 'overflow-hidden'
         }`}
+        style={{ height: resolvedHeight, minHeight: resolvedHeight }}
       >
         {renderInnerContent()}
       </div>

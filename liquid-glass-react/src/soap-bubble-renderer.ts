@@ -1194,6 +1194,7 @@ export function createSoapBubbleRenderer(
     invalidate() {
       // Batched into the shared frame: a sliding bubble carries its canvas
       // along, so only the backdrop lookup needs the new position.
+      clearFrameRects();
       dirtyFrame = true;
       request();
     },

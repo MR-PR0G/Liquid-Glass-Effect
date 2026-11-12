@@ -15,7 +15,7 @@
  * - 'empty': Clean optical liquid glass capsule container
  */
 
-import React, { forwardRef, useState, HTMLAttributes } from 'react';
+import React, { forwardRef, useState, useRef, useImperativeHandle, useEffect, HTMLAttributes } from 'react';
 import { SoapBubbleSurface } from './soap-bubble-system';
 import { SoapBubbleMaterial } from './use-soap-bubble';
 import { LiquidGlassNavbar, NavbarItem } from './LiquidGlassNavbar';
@@ -225,24 +225,24 @@ function hexToRgba(hex: string, alpha: number): string {
 export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   mode = 'empty',
   backdrop,
-  refraction = 0.35,
+  refraction = 0.344,
   bevel = 28,
   dispersion = 0.28,
   blur = 0,
-  darkTint = 0.16,
-  darkTintStep,
+  darkTint = 0.15,
+  darkTintStep = 2,
   tintColor = '#000000',
-  thickness = 450,
+  thickness = 475,
   thicknessStep = 5,
-  viscosity = 0.60,
+  viscosity = 0.58,
   viscosityStep = 5,
-  radius = 9999,
+  radius,
   topRadius,
   bottomRadius,
   borderOpacity = 0.18,
   borderGradient,
   shadowStep = 5,
-  shadowTone = '3d',
+  shadowTone = 'dark',
   isShadowInverted = false,
   tensionX: controlledTensionX,
   onTension,
@@ -265,6 +265,27 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   children,
   ...rest
 }, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useImperativeHandle(ref, () => containerRef.current!, []);
+
+  const [autoBackdrop, setAutoBackdrop] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (backdrop !== undefined) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const candidate =
+      (el.closest('[data-liquid-backdrop]') as HTMLElement | null) ||
+      (el.parentElement?.closest('section, main, [class*="min-h-screen"], [class*="bg-"]') as HTMLElement | null) ||
+      el.parentElement ||
+      document.body;
+    if (candidate && candidate instanceof HTMLElement) {
+      setAutoBackdrop(candidate);
+    }
+  }, [backdrop]);
+
+  const effectiveBackdrop = backdrop !== undefined ? backdrop : autoBackdrop;
+
   const [internalTensionX, setInternalTensionX] = useState(0);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
   const isPlaying = externalIsPlaying !== undefined ? externalIsPlaying : internalIsPlaying;
@@ -275,8 +296,18 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
     onTension?.(tx);
   };
 
-  const effectiveTopRadius = topRadius !== undefined ? topRadius : radius;
-  const effectiveBottomRadius = bottomRadius !== undefined ? bottomRadius : radius;
+  const isPresetMode = mode === 'nav' || mode === 'text' || mode === 'player';
+  const resolvedHeight = style.height || (isPresetMode ? 92 : undefined);
+  const resolvedWidth = style.width || (isPresetMode ? 'min(90vw, 620px)' : undefined);
+  const resolvedMaxWidth = style.maxWidth || (isPresetMode ? '620px' : undefined);
+
+  const numericH = typeof resolvedHeight === 'number'
+    ? resolvedHeight
+    : (parseInt(String(resolvedHeight), 10) || 92);
+
+  const maxCapRad = Math.max(1, Math.round(numericH / 2));
+  const effectiveTopRadius = topRadius !== undefined ? topRadius : (radius !== undefined ? radius : maxCapRad);
+  const effectiveBottomRadius = bottomRadius !== undefined ? bottomRadius : (radius !== undefined ? radius : maxCapRad);
   const radiusCss = `${effectiveTopRadius}px ${effectiveTopRadius}px ${effectiveBottomRadius}px ${effectiveBottomRadius}px`;
 
   const darkTintRgba = darkTint > 0 ? hexToRgba(tintColor, darkTint) : 'transparent';
@@ -293,14 +324,12 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
         ? 'transform 640ms cubic-bezier(0.12, 1.68, 0.28, 1), width 300ms ease, height 300ms ease'
         : 'transform 420ms cubic-bezier(0.16, 1.25, 0.3, 1), width 300ms ease, height 300ms ease');
 
-  // Fallback CSS liquid glass filters (when no backdrop canvas is attached)
-  const effectiveBlur = blur > 0 ? blur : 14;
-  const backdropFilterCss = `blur(${effectiveBlur}px) saturate(1.8) brightness(1.10)`;
+  const effectiveBlur = blur;
+  const backdropFilterCss = blur > 0 ? `blur(${blur}px) saturate(1.8) brightness(1.10)` : 'none';
 
   // Inner content renderer based on mode
   const renderInnerContent = () => {
     if (mode === 'nav') {
-      const numericH = typeof resolvedHeight === 'number' ? resolvedHeight : parseInt(resolvedHeight || '74', 10) || 74;
       return (
         <div 
           className="relative flex items-center justify-center w-full pointer-events-auto px-1"
@@ -309,6 +338,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
           <LiquidGlassNavbar
             embedded={true}
             height={numericH}
+            maxWidth={typeof resolvedMaxWidth === 'number' ? resolvedMaxWidth : 620}
             items={items}
             activeIndex={activeIndex}
             onChange={(idx) => {
@@ -319,9 +349,9 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               }
             }}
             onTension={handleTension}
-            backdropRef={backdrop as React.RefObject<HTMLCanvasElement | null>}
+            backdropRef={effectiveBackdrop as any}
             darkTint={darkTint}
-            darkTintStep={Math.round(darkTint * 10)}
+            darkTintStep={darkTintStep ?? 2}
             refraction={refraction * (0.70 + (thicknessStep / 10) * 0.75)}
             bevel={Math.round(bevel * (0.75 + (thicknessStep / 10) * 0.55))}
             viscosity={viscosity}
@@ -433,14 +463,9 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
     return children;
   };
 
-  const isPresetMode = mode === 'nav' || mode === 'text' || mode === 'player';
-  const resolvedHeight = style.height || (isPresetMode ? '74px' : undefined);
-  const resolvedWidth = style.width || (isPresetMode ? '100%' : undefined);
-  const resolvedMaxWidth = style.maxWidth || (isPresetMode ? '560px' : undefined);
-
   return (
     <div
-      ref={ref}
+      ref={containerRef}
       className={`relative select-none flex items-center justify-center ${className}`}
       style={{
         height: resolvedHeight,
@@ -459,10 +484,10 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
     >
       {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Always Active for True Physical Liquid Glass) */}
       <SoapBubbleSurface
-        backdrop={backdrop}
+        backdrop={effectiveBackdrop}
         interactive={interactive}
         wobble={wobble}
-        radius={radius}
+        radius={effectiveTopRadius}
         topRadius={effectiveTopRadius}
         bottomRadius={effectiveBottomRadius}
         glass={1.0}
@@ -487,8 +512,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
           borderRadius: radiusCss,
           backgroundColor: darkTintRgba,
           border: borderOpacity <= 0 ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
-          backdropFilter: `blur(${effectiveBlur}px) saturate(1.8) brightness(1.10)`,
-          WebkitBackdropFilter: `blur(${effectiveBlur}px) saturate(1.8) brightness(1.10)`,
+          backdropFilter: backdropFilterCss,
+          WebkitBackdropFilter: backdropFilterCss,
         }}
       />
 

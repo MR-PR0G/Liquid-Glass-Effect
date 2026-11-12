@@ -69,11 +69,11 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   blur = 0,
   borderOpacity = 0.18,
   borderGradient,
-  shadowTone = '3d',
+  shadowTone = 'dark',
   shadowStep = 5,
   isShadowInverted = false,
-  height = 74,
-  maxWidth = 560,
+  height = 92,
+  maxWidth = 620,
   embedded = false,
 }) => {
   const [internalIndex, setInternalIndex] = useState(0);
@@ -163,14 +163,14 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
 
   // 1. Smart Responsive Resting Geometry:
   // Proportional vertical padding ensures the resting lens always sits perfectly balanced in any bar height.
-  const rawH = trackHeight || 56;
+  const rawH = trackHeight || height || 92;
   const restingHeight = useMemo(() => {
     const verticalPadding = Math.max(4, Math.min(8, Math.round(rawH * 0.095)));
     return Math.max(36, rawH - verticalPadding * 2);
   }, [rawH]);
 
-  // Native luxury squircle aspect ratio (1.76:1)
-  const NATIVE_ASPECT_RATIO = 1.76;
+  // Native luxury squircle aspect ratio (1.67:1 for exact 127px x 76px flagship lens)
+  const NATIVE_ASPECT_RATIO = 1.67;
   const restingWidth = useMemo(() => {
     const idealW = Math.round(restingHeight * NATIVE_ASPECT_RATIO);
     const maxAllowedW = Math.round(slotWidth * 0.90);
@@ -196,7 +196,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
 
   // Dynamically responsive icon size proportional to the resting lens height
   const iconSize = useMemo(() => {
-    return Math.max(21, Math.min(34, Math.round(restingHeight * 0.52)));
+    return Math.max(21, Math.min(32, Math.round(restingHeight * 0.44)));
   }, [restingHeight]);
 
   // Volumetric Jelly Physics Engine:
@@ -572,8 +572,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       onWheel={(e) => e.stopPropagation()}
       className={`relative w-full h-full select-none touch-none cursor-grab active:cursor-grabbing ${className}`}
       style={{
-        height: `${height || 74}px`,
-        minHeight: `${height || 74}px`,
+        height: `${height || 92}px`,
+        minHeight: `${height || 92}px`,
         touchAction: 'none',
         ...style,
       }}

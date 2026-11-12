@@ -86,17 +86,31 @@ export function generateSeparatedExportCode(
       <div id="liquid-nav-lens" class="liquid-nav-lens"></div>
     </nav>`;
   } else if (innerContentMode === 'player') {
-    innerHtml = `    <!-- Liquid Glass Minimalist Audio Player -->
+    innerHtml = `    <!-- Liquid Glass Luxury Cupertino Audio Player -->
     <div class="liquid-glass-player">
       <div class="player-info">
-        <svg class="player-icon pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-        </svg>
-        <span class="player-title">Cupertino Waves</span>
+        <div class="player-disc">
+          <div class="player-eq">
+            <span class="eq-bar bar-1"></span>
+            <span class="eq-bar bar-2"></span>
+            <span class="eq-bar bar-3"></span>
+          </div>
+        </div>
+        <div class="player-meta">
+          <span class="player-title">Cupertino Waves</span>
+          <span class="player-sub">Lossless Audio • 48kHz</span>
+        </div>
       </div>
       <div class="player-controls">
-        <button class="ctrl-btn" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
-        <button class="ctrl-btn" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+        <button class="ctrl-btn btn-secondary" aria-label="Previous">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+        </button>
+        <button class="ctrl-btn btn-primary" aria-label="Play">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="ctrl-btn btn-secondary" aria-label="Next">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
       </div>
     </div>`;
   } else {
@@ -255,25 +269,45 @@ ${isShadowInverted ? `
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 
-/* Minimalist Audio Player Mode */
+/* Luxury Cupertino Audio Player Mode */
 .liquid-glass-player {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0 12px;
+  padding: 0 18px;
   color: #f4f4f5;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
+  box-sizing: border-box;
 }
-.player-info { display: flex; align-items: center; gap: 8px; }
-.player-icon { width: 16px; height: 16px; color: #38bdf8; }
-.pulse { animation: liquid-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-@keyframes liquid-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-.player-controls { display: flex; align-items: center; gap: 12px; }
-.ctrl-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; transition: opacity 0.2s; }
-.ctrl-btn:hover { opacity: 0.75; }
-.ctrl-btn svg { width: 16px; height: 16px; }`;
+.player-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.player-disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.player-eq { display: flex; align-items: flex-end; gap: 2.5px; height: 14px; }
+.eq-bar { width: 3px; border-radius: 2px; }
+.bar-1 { height: 14px; background-color: #22d3ee; animation: eq-pulse 800ms ease-in-out infinite alternate; }
+.bar-2 { height: 10px; background-color: #38bdf8; animation: eq-pulse 600ms ease-in-out infinite alternate 150ms; }
+.bar-3 { height: 13px; background-color: #818cf8; animation: eq-pulse 900ms ease-in-out infinite alternate 300ms; }
+@keyframes eq-pulse { 0% { height: 4px; } 100% { height: 14px; } }
+.player-meta { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.player-title { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.player-sub { font-size: 11px; font-family: monospace; color: rgba(212, 212, 216, 0.75); letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ctrl-btn { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s ease; }
+.btn-primary { width: 38px; height: 38px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); border: 1px solid rgba(255, 255, 255, 0.40); color: #fff; }
+.btn-primary svg { width: 16px; height: 16px; margin-left: 2px; fill: currentColor; }
+.btn-secondary { width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #e4e4e7; }
+.btn-secondary svg { width: 14px; height: 14px; }
+.ctrl-btn:hover { transform: scale(1.06); }
+.ctrl-btn:active { transform: scale(0.95); }`;
 
   // -------------------------------------------------------------
   // 3. JAVASCRIPT & WEBGL ENGINE

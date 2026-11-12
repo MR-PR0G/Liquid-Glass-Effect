@@ -211,9 +211,11 @@ export interface LiquidGlassProps extends Omit<HTMLAttributes<HTMLDivElement>, '
 
   // Mode: 'player' props
   audioTitle?: string;
+  audioArtist?: string;
   isPlaying?: boolean;
   onPlayToggle?: () => void;
   onNextTrack?: () => void;
+  onPrevTrack?: () => void;
 
   /** Inner content node (used when mode === 'empty' or passed directly) */
   children?: React.ReactNode;
@@ -362,9 +364,11 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   accentColor = '#00e5ff',
   text = 'LIQUID GLASS',
   audioTitle = 'Cupertino Waves',
+  audioArtist = 'Lossless Audio • 48kHz',
   isPlaying: externalIsPlaying,
   onPlayToggle,
   onNextTrack,
+  onPrevTrack,
   children,
   ...rest
 }, ref) => {
@@ -546,30 +550,149 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
     if (mode === 'player') {
       return (
         <div 
-          className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto px-4"
-          style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}
+          className="flex items-center justify-between w-full h-full text-zinc-200 pointer-events-auto px-4 sm:px-6 select-none"
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxSizing: 'border-box',
+            padding: '0 20px',
+          }}
         >
-          <div className="flex items-center gap-2">
-            <svg 
-              width={16} 
-              height={16} 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth={2.2} 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className="text-cyan-400 animate-pulse"
+          {/* Left: Track Info with Dynamic Equalizer Bars */}
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              minWidth: 0,
+              flex: '1 1 auto',
+            }}
+          >
+            {/* Glowing Frosted Music Disc */}
+            <div 
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35))',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: isPlaying ? '0 0 16px rgba(6, 182, 212, 0.45)' : 'none',
+                transition: 'box-shadow 300ms ease',
+              }}
             >
-              <path d="M9 18V5l12-2v13"/>
-              <circle cx="6" cy="18" r="3"/>
-              <circle cx="18" cy="16" r="3"/>
-            </svg>
-            <span className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 truncate max-w-[130px] sm:max-w-[190px]">
-              {audioTitle}
-            </span>
+              {/* Dynamic 3-Bar Equalizer Waveform */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2.5px', height: '14px' }}>
+                <span 
+                  style={{
+                    width: '3px',
+                    height: isPlaying ? '14px' : '6px',
+                    borderRadius: '2px',
+                    backgroundColor: '#22d3ee',
+                    animation: isPlaying ? 'pulse 800ms ease-in-out infinite alternate' : 'none',
+                    transition: 'height 200ms ease',
+                  }} 
+                />
+                <span 
+                  style={{
+                    width: '3px',
+                    height: isPlaying ? '10px' : '12px',
+                    borderRadius: '2px',
+                    backgroundColor: '#38bdf8',
+                    animation: isPlaying ? 'pulse 600ms ease-in-out infinite alternate 150ms' : 'none',
+                    transition: 'height 200ms ease',
+                  }} 
+                />
+                <span 
+                  style={{
+                    width: '3px',
+                    height: isPlaying ? '13px' : '8px',
+                    borderRadius: '2px',
+                    backgroundColor: '#818cf8',
+                    animation: isPlaying ? 'pulse 900ms ease-in-out infinite alternate 300ms' : 'none',
+                    transition: 'height 200ms ease',
+                  }} 
+                />
+              </div>
+            </div>
+
+            {/* Typography: Title + Subtitle */}
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+              <span 
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  color: '#ffffff',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+                }}
+              >
+                {audioTitle}
+              </span>
+              <span 
+                style={{
+                  fontSize: '11px',
+                  fontFamily: 'monospace',
+                  color: 'rgba(212, 212, 216, 0.75)',
+                  letterSpacing: '0.06em',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {audioArtist}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Right: Controls (Previous, Play/Pause, Next) */}
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexShrink: 0,
+            }}
+          >
+            {/* Prev Track Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrevTrack?.();
+              }}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#e4e4e7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 180ms ease',
+              }}
+              title="Previous Track"
+            >
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="19 20 9 12 19 4 19 20"/>
+                <line x1="5" y1="19" x2="5" y2="5"/>
+              </svg>
+            </button>
+
+            {/* Play / Pause Primary Glass Button */}
             <button
               type="button"
               onClick={(e) => {
@@ -577,30 +700,57 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
                 if (externalIsPlaying === undefined) setInternalIsPlaying(!isPlaying);
                 onPlayToggle?.();
               }}
-              className="p-1.5 rounded-full hover:bg-white/20 transition-all text-white cursor-pointer"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.22)',
+                border: '1px solid rgba(255, 255, 255, 0.40)',
+                boxShadow: isPlaying ? '0 0 14px rgba(255, 255, 255, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.8)' : 'inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 180ms cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="6" y="4" width="4" height="16" rx="1"/>
-                  <rect x="14" y="4" width="4" height="16" rx="1"/>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16" rx="1.5"/>
+                  <rect x="14" y="4" width="4" height="16" rx="1.5"/>
                 </svg>
               ) : (
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
               )}
             </button>
+
+            {/* Next Track Button */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onNextTrack?.();
               }}
-              className="p-1.5 rounded-full hover:bg-white/20 transition-all text-zinc-400 hover:text-white cursor-pointer"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#e4e4e7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 180ms ease',
+              }}
               title="Next Track"
             >
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 4 15 12 5 20 5 4"/>
                 <line x1="19" y1="5" x2="19" y2="19"/>
               </svg>
@@ -676,6 +826,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
           floorLight={0}
           bottomShade={false}
           keyLight={false}
+          speed={0}
+          paused={!interactive && wobble === 0}
           className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
           style={{
             borderRadius: radiusCss,

@@ -31,8 +31,9 @@ import {
   X, 
   Plus, 
   Play,
+  Pause,
   SkipForward,
-  Music,
+  SkipBack,
   Link2, 
   Unlink 
 } from 'lucide-react';
@@ -71,6 +72,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
   const fileInputRef = useRef<HTMLInputElement>(null);
   const customImageElementRef = useRef<HTMLImageElement | null>(null);
   const [innerContentMode, setInnerContentMode] = useState<'text' | 'nav' | 'player'>('nav');
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [shadowTone, setShadowTone] = useState<ShadowTone>('dark');
   const [isShadowInverted, setIsShadowInverted] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState(0);
@@ -1677,18 +1679,190 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
               )}
 
               {innerContentMode === 'player' && (
-                <div className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto">
-                  <div className="flex items-center gap-2">
-                    <Music size={15} className="text-cyan-400 animate-pulse" />
-                    <span className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 truncate max-w-[130px] sm:max-w-[190px]">
-                      Cupertino Waves
-                    </span>
+                <div 
+                  className="flex items-center justify-between w-full h-full text-zinc-200 pointer-events-auto select-none"
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxSizing: 'border-box',
+                    padding: '0 20px',
+                  }}
+                >
+                  {/* Left: Track Info with Dynamic Equalizer Bars */}
+                  <div 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      minWidth: 0,
+                      flex: '1 1 auto',
+                    }}
+                  >
+                    {/* Glowing Frosted Music Disc */}
+                    <div 
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35))',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: isPlayingAudio ? '0 0 16px rgba(6, 182, 212, 0.45)' : 'none',
+                        transition: 'box-shadow 300ms ease',
+                      }}
+                    >
+                      {/* Dynamic 3-Bar Equalizer Waveform */}
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2.5px', height: '14px' }}>
+                        <span 
+                          style={{
+                            width: '3px',
+                            height: isPlayingAudio ? '14px' : '6px',
+                            borderRadius: '2px',
+                            backgroundColor: '#22d3ee',
+                            animation: isPlayingAudio ? 'pulse 800ms ease-in-out infinite alternate' : 'none',
+                            transition: 'height 200ms ease',
+                          }} 
+                        />
+                        <span 
+                          style={{
+                            width: '3px',
+                            height: isPlayingAudio ? '10px' : '12px',
+                            borderRadius: '2px',
+                            backgroundColor: '#38bdf8',
+                            animation: isPlayingAudio ? 'pulse 600ms ease-in-out infinite alternate 150ms' : 'none',
+                            transition: 'height 200ms ease',
+                          }} 
+                        />
+                        <span 
+                          style={{
+                            width: '3px',
+                            height: isPlayingAudio ? '13px' : '8px',
+                            borderRadius: '2px',
+                            backgroundColor: '#818cf8',
+                            animation: isPlayingAudio ? 'pulse 900ms ease-in-out infinite alternate 300ms' : 'none',
+                            transition: 'height 200ms ease',
+                          }} 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Typography: Title + Subtitle */}
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+                      <span 
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          letterSpacing: '0.02em',
+                          color: '#ffffff',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+                        }}
+                      >
+                        Cupertino Waves
+                      </span>
+                      <span 
+                        style={{
+                          fontSize: '11px',
+                          fontFamily: 'monospace',
+                          color: 'rgba(212, 212, 216, 0.75)',
+                          letterSpacing: '0.06em',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        Lossless Audio • 48kHz
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button className="p-1 rounded-full hover:bg-white/20 transition-all text-white" title="Play">
-                      <Play size={14} className="fill-white" />
+
+                  {/* Right: Controls (Previous, Play/Pause, Next) */}
+                  <div 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {/* Prev Track Button */}
+                    <button
+                      type="button"
+                      className="hover:scale-105 active:scale-95"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#e4e4e7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 180ms ease',
+                      }}
+                      title="Previous Track"
+                    >
+                      <SkipBack size={14} />
                     </button>
-                    <button className="p-1 rounded-full hover:bg-white/20 transition-all text-zinc-400 hover:text-white" title="Next">
+
+                    {/* Play / Pause Primary Glass Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                      className="hover:scale-105 active:scale-95"
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.22)',
+                        border: '1px solid rgba(255, 255, 255, 0.40)',
+                        boxShadow: isPlayingAudio ? '0 0 14px rgba(255, 255, 255, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.8)' : 'inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 180ms cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                      title={isPlayingAudio ? "Pause" : "Play"}
+                    >
+                      {isPlayingAudio ? (
+                        <Pause size={16} />
+                      ) : (
+                        <Play size={16} className="fill-white ml-0.5" />
+                      )}
+                    </button>
+
+                    {/* Next Track Button */}
+                    <button
+                      type="button"
+                      className="hover:scale-105 active:scale-95"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#e4e4e7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 180ms ease',
+                      }}
+                      title="Next Track"
+                    >
                       <SkipForward size={14} />
                     </button>
                   </div>

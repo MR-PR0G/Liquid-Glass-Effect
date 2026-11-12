@@ -19,6 +19,7 @@ import React, { forwardRef, useState, useRef, useImperativeHandle, useEffect, HT
 import { SoapBubbleSurface } from './soap-bubble-system';
 import { SoapBubbleMaterial } from './use-soap-bubble';
 import { LiquidGlassNavbar, NavbarItem } from './LiquidGlassNavbar';
+import { notifyBackdropChanged } from './soap-bubble-gl';
 
 export type ShadowTone = 'dark' | 'light' | '3d';
 export type LiquidGlassMode = 'nav' | 'text' | 'player' | 'empty';
@@ -145,7 +146,9 @@ export interface LiquidGlassProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   mode?: LiquidGlassMode;
   /** Optional HTMLCanvasElement or HTMLElement backdrop for hardware Snell ray-tracing */
   backdrop?: React.RefObject<HTMLCanvasElement | HTMLElement | null> | null;
-  /** Snell's law physical refraction index (default 0.35) */
+  /** Built-in high-contrast optical backdrop wallpaper ('cross' = Bold Blue Cross from flagship demo, 'none' = transparent) */
+  wallpaper?: 'cross' | 'stripes' | 'none';
+  /** Snell's law physical refraction index (default 0.344) */
   refraction?: number;
   /** Bevel meniscus curvature in pixels (default 28) */
   bevel?: number;
@@ -224,12 +227,87 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
 }
 
+/**
+ * Renders the flagship Bold Blue Cross wallpaper onto a canvas for Snell ray-tracing.
+ */
+function drawCrossPattern(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width;
+  const h = canvas.height;
+  if (w <= 0 || h <= 0) return;
+
+  const bandW = 46;
+  const period = bandW * 2;
+
+  ctx.fillStyle = '#05060a';
+  ctx.fillRect(0, 0, w, h);
+
+  // Group 1 (+45 deg): Bold Blue bands
+  ctx.fillStyle = '#2563eb';
+  for (let i = -h; i < h + period * 2; i += period) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(w, i + w * 0.75);
+    ctx.lineTo(w, i + w * 0.75 + bandW);
+    ctx.lineTo(0, i + bandW);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Group 2 (-45 deg): Crossed Bold Blue bands with screen composite
+  ctx.globalCompositeOperation = 'screen';
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.72)';
+  for (let i = -h; i < h + period * 2; i += period) {
+    ctx.beginPath();
+    ctx.moveTo(w, i);
+    ctx.lineTo(0, i + w * 0.75);
+    ctx.lineTo(0, i + w * 0.75 + bandW);
+    ctx.lineTo(w, i + bandW);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/**
+ * Renders high-contrast diagonal stripes onto a canvas for optical testing.
+ */
+function drawStripesPattern(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width;
+  const h = canvas.height;
+  if (w <= 0 || h <= 0) return;
+
+  const colors = ['#ec4899', '#94a3b8', '#2563eb', '#07080d'];
+  const stripeW = 32;
+  const period = stripeW * colors.length;
+
+  ctx.fillStyle = '#07080d';
+  ctx.fillRect(0, 0, w, h);
+
+  for (let i = -h; i < h + period * 2; i += stripeW) {
+    const step = Math.floor(i / stripeW);
+    const colorIdx = ((step % colors.length) + colors.length) % colors.length;
+    ctx.fillStyle = colors[colorIdx];
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(w, i + w * 0.75);
+    ctx.lineTo(w, i + w * 0.75 + stripeW);
+    ctx.lineTo(0, i + stripeW);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
 export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   mode = 'empty',
   backdrop,
+  wallpaper = 'cross',
   refraction = 0.344,
   bevel = 28,
-  dispersion = 0.0,
+  dispersion = 0.28,
   blur = 0,
   darkTint = 0.15,
   darkTintStep = 2,
@@ -250,8 +328,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   onTension,
   interactive = false,
   wobble = 0,
-  reflectivity = 0.35,
-  glintIntensity = 0.75,
+  reflectivity = 0.0,
+  glintIntensity = 0,
   className = '',
   style = {},
   // Mode-specific props
@@ -270,6 +348,36 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   useImperativeHandle(ref, () => containerRef.current!, []);
+
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const shouldRenderWallpaper = backdrop === undefined && wallpaper !== 'none';
+  const effectiveBackdrop = backdrop !== undefined ? backdrop : (shouldRenderWallpaper ? internalCanvasRef : null);
+
+  useEffect(() => {
+    if (!shouldRenderWallpaper) return;
+    const canvas = internalCanvasRef.current;
+    if (!canvas) return;
+
+    const render = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+      }
+      if (wallpaper === 'stripes') {
+        drawStripesPattern(canvas);
+      } else {
+        drawCrossPattern(canvas);
+      }
+      notifyBackdropChanged(canvas);
+    };
+
+    render();
+    window.addEventListener('resize', render);
+    return () => window.removeEventListener('resize', render);
+  }, [shouldRenderWallpaper, wallpaper]);
 
   const [internalTensionX, setInternalTensionX] = useState(0);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
@@ -300,6 +408,10 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   const glassShadow = computeGlassBoxShadow(shadowStep, shadowTone, borderOpacity, thicknessStep, isShadowInverted);
   const invertedAura = computeInvertedGlassAura(shadowStep, shadowTone, borderOpacity);
 
+  // Scaled optical refraction and bevel matching flagship demo
+  const effectiveRefraction = ((thicknessStep ?? 5) >= 9 ? refraction * 2.85 : refraction) * (0.70 + (thicknessStep / 10) * 0.75);
+  const effectiveBevel = Math.round(((thicknessStep ?? 5) >= 9 ? bevel * 2.3 : bevel) * (0.75 + (thicknessStep / 10) * 0.55));
+
   // Dynamic fluid spring transition based on viscosityStep:
   const transitionTiming = currentTensionX !== 0
     ? 'none'
@@ -318,7 +430,17 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
       return (
         <div 
           className="relative flex items-center justify-center w-full pointer-events-auto px-1"
-          style={{ height: `${numericH}px`, minHeight: `${numericH}px` }}
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: '100%',
+            height: `${numericH}px`,
+            minHeight: `${numericH}px`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxSizing: 'border-box',
+          }}
         >
           <LiquidGlassNavbar
             embedded={true}
@@ -334,7 +456,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               }
             }}
             onTension={handleTension}
-            backdropRef={backdrop as any}
+            backdropRef={effectiveBackdrop as any}
             darkTint={darkTint}
             darkTintStep={darkTintStep ?? 2}
             refraction={refraction * (0.70 + (thicknessStep / 10) * 0.75)}
@@ -455,101 +577,129 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   };
 
   return (
-    <div
-      ref={containerRef}
-      data-liquid-glass=""
-      className={`relative select-none flex items-center justify-center ${className}`}
-      style={{
-        height: resolvedHeight,
-        minHeight: resolvedHeight,
-        width: resolvedWidth,
-        maxWidth: resolvedMaxWidth,
-        borderRadius: radiusCss,
-        backgroundColor: darkTintRgba,
-        boxShadow: glassShadow,
-        transform: `translate3d(${currentTensionX}px, 0, 0)`,
-        transition: transitionTiming,
-        boxSizing: 'border-box',
-        ...style,
-      }}
-      {...rest}
-    >
-      {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Always Active for True Physical Liquid Glass) */}
-      <SoapBubbleSurface
-        backdrop={backdrop}
-        interactive={interactive}
-        wobble={wobble}
-        radius={effectiveTopRadius}
-        topRadius={effectiveTopRadius}
-        bottomRadius={effectiveBottomRadius}
-        glass={1.0}
-        refraction={refraction}
-        bevel={bevel}
-        dispersion={dispersion}
-        blur={blur}
-        clearCenter={1.0}
-        reflectivity={reflectivity}
-        tint={darkTintRgba}
-        oilCoverage={0}
-        oilOpacity={0}
-        iridescence={0}
-        glintIntensity={0}
-        windowLight={false}
-        windowIntensity={0}
-        floorLight={0}
-        bottomShade={false}
-        keyLight={false}
-        className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+    <>
+      {/* High-Performance Canvas Wallpaper for Hardware Snell Ray-Tracing */}
+      {shouldRenderWallpaper && (
+        <canvas
+          ref={internalCanvasRef}
+          data-liquid-glass-wallpaper=""
+          className="fixed inset-0 pointer-events-none"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      <div
+        ref={containerRef}
+        data-liquid-glass=""
+        className={`relative select-none flex items-center justify-center ${className}`}
         style={{
+          height: resolvedHeight,
+          minHeight: resolvedHeight,
+          width: resolvedWidth,
+          maxWidth: resolvedMaxWidth,
           borderRadius: radiusCss,
           backgroundColor: darkTintRgba,
-          border: borderOpacity <= 0 ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
-          backdropFilter: backdropFilterCss,
-          WebkitBackdropFilter: backdropFilterCss,
+          boxShadow: glassShadow,
+          transform: `translate3d(${currentTensionX}px, 0, 0)`,
+          transition: transitionTiming,
+          boxSizing: 'border-box',
+          ...style,
         }}
-      />
-
-      {/* 3. Gradient Border Overlay with CSS Mask Composite */}
-      {borderGradient && borderOpacity > 0 && (
-        <div
-          className="absolute inset-0 pointer-events-none rounded-[inherit]"
-          style={{
-            borderRadius: radiusCss,
-            padding: '1px',
-            background: borderGradient,
-            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-            WebkitMaskComposite: 'xor',
-            maskComposite: 'exclude',
-            opacity: Math.min(1.0, borderOpacity * 4.0),
-            zIndex: 3,
-            transition: 'opacity 200ms ease, background 200ms ease',
-          }}
-        />
-      )}
-
-      {/* 4. Internal Inverted Caustic Aura Layer */}
-      {isShadowInverted && (
-        <div
-          className="absolute inset-0 w-full h-full pointer-events-none rounded-[inherit]"
-          style={{
-            borderRadius: radiusCss,
-            boxShadow: invertedAura,
-            zIndex: 4,
-            transition: 'box-shadow 200ms ease',
-          }}
-        />
-      )}
-
-      {/* 5. Content Container */}
-      <div 
-        className={`relative z-10 w-full rounded-[inherit] flex items-center justify-center ${
-          mode === 'nav' ? 'overflow-visible' : 'overflow-hidden'
-        }`}
-        style={{ height: resolvedHeight, minHeight: resolvedHeight }}
+        {...rest}
       >
-        {renderInnerContent()}
+        {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Always Active for True Physical Liquid Glass) */}
+        <SoapBubbleSurface
+          backdrop={effectiveBackdrop}
+          interactive={interactive}
+          wobble={wobble}
+          radius={effectiveTopRadius}
+          topRadius={effectiveTopRadius}
+          bottomRadius={effectiveBottomRadius}
+          glass={1.0}
+          refraction={effectiveRefraction}
+          bevel={effectiveBevel}
+          dispersion={dispersion}
+          blur={blur}
+          clearCenter={1.0}
+          reflectivity={reflectivity}
+          tint={darkTintRgba}
+          oilCoverage={0}
+          oilOpacity={0}
+          iridescence={0}
+          glintIntensity={glintIntensity}
+          windowLight={false}
+          windowIntensity={0}
+          floorLight={0}
+          bottomShade={false}
+          keyLight={false}
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+          style={{
+            borderRadius: radiusCss,
+            backgroundColor: darkTintRgba,
+            border: borderOpacity <= 0 ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
+            backdropFilter: backdropFilterCss,
+            WebkitBackdropFilter: backdropFilterCss,
+          }}
+        />
+
+        {/* 3. Gradient Border Overlay with CSS Mask Composite */}
+        {borderGradient && borderOpacity > 0 && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-[inherit]"
+            style={{
+              borderRadius: radiusCss,
+              padding: '1px',
+              background: borderGradient,
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude',
+              opacity: Math.min(1.0, borderOpacity * 4.0),
+              zIndex: 3,
+              transition: 'opacity 200ms ease, background 200ms ease',
+            }}
+          />
+        )}
+
+        {/* 4. Internal Inverted Caustic Aura Layer */}
+        {isShadowInverted && (
+          <div
+            className="absolute inset-0 w-full h-full pointer-events-none rounded-[inherit]"
+            style={{
+              borderRadius: radiusCss,
+              boxShadow: invertedAura,
+              zIndex: 4,
+              transition: 'box-shadow 200ms ease',
+            }}
+          />
+        )}
+
+        {/* 5. Content Container */}
+        <div 
+          className={`relative z-10 w-full rounded-[inherit] flex items-center justify-center ${
+            mode === 'nav' ? 'overflow-visible' : 'overflow-hidden'
+          }`}
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: resolvedHeight,
+            minHeight: resolvedHeight,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {renderInnerContent()}
+        </div>
       </div>
-    </div>
+    </>
   );
 });
 

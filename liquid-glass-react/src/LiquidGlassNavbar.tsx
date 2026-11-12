@@ -62,18 +62,18 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   className = '',
   style = {},
   backdropRef,
-  darkTint = 0.2,
-  darkTintStep,
-  refraction = 0.34,
+  darkTint = 0.15,
+  darkTintStep = 2,
+  refraction = 0.344,
   bevel = 28,
-  dispersion = 0.0,
-  reflectivity = 0.35,
-  glintIntensity = 0.75,
+  dispersion = 0.28,
+  reflectivity = 0.0,
+  glintIntensity = 0,
   iridescence = 0,
   accentColor = '#ffffff',
-  viscosity = 0.60,
+  viscosity = 0.58,
   viscosityStep = 5,
-  thickness = 450,
+  thickness = 475,
   thicknessStep = 5,
   blur = 0,
   borderOpacity = 0.18,
@@ -91,8 +91,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   const trackRef = useRef<HTMLDivElement>(null);
   const lensRendererRef = useRef<SoapBubbleRenderer | null>(null);
   const lensSurfaceRef = useRef<HTMLElement | null>(null);
-  const [trackWidth, setTrackWidth] = useState(0);
-  const [trackHeight, setTrackHeight] = useState(0);
+  const [trackWidth, setTrackWidth] = useState(maxWidth || 620);
+  const [trackHeight, setTrackHeight] = useState(height || 92);
 
   // Drag & Physics states
   const [isDragging, setIsDragging] = useState(false);
@@ -236,6 +236,12 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   const [bubbleCenterX, setBubbleCenterX] = useState<number>(() => getSlotCenterX(activeIndex));
   const bubbleCenterXRef = useRef(bubbleCenterX);
   bubbleCenterXRef.current = bubbleCenterX;
+
+  useEffect(() => {
+    if (trackWidth > 0 && !isDragging && !isAnimating) {
+      setBubbleCenterX(getSlotCenterX(activeIndex));
+    }
+  }, [trackWidth, activeIndex, getSlotCenterX, isDragging, isAnimating]);
 
   // Animation controller & dynamic viscosity ref
   const animRafRef = useRef<number | null>(null);
@@ -582,9 +588,13 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       onWheel={(e) => e.stopPropagation()}
       className={`relative w-full h-full select-none touch-none cursor-grab active:cursor-grabbing ${className}`}
       style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: `${maxWidth}px`,
         height: `${height || 92}px`,
         minHeight: `${height || 92}px`,
         touchAction: 'none',
+        boxSizing: 'border-box',
         ...style,
       }}
     >
@@ -730,14 +740,14 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             oilCoverage={0}
             oilOpacity={0}
             iridescence={iridescence ?? 0}
-            glintIntensity={glintIntensity}
-            reflectivity={reflectivity}
+            glintIntensity={0}
+            reflectivity={0.0}
             thickness={thickness}
-            windowLight={true}
-            windowIntensity={0.25}
-            floorLight={0.15}
-            bottomShade={true}
-            keyLight={true}
+            windowLight={false}
+            windowIntensity={0}
+            floorLight={0}
+            bottomShade={false}
+            keyLight={false}
             speed={0}
             paused={false}
             tint="transparent"
@@ -822,12 +832,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             const totalScaleX = baseScale * iconBounce * microStretchX;
             const totalScaleY = baseScale * iconBounce * microCompressY;
 
-            // 3. Meniscus Caustic Arc Light Sweep (Starts at corner, sweeps to center):
-            const glintOffset = -signedEdge * 4.8;
-            const glintIntensityVal = (edgeFactor * 0.95 + coreFactor * 0.35) * glintIntensity;
-            const lightCenterX = Math.max(10, Math.min(90, Math.round(50 - signedEdge * 38)));
-            const lightCenterY = Math.round(50 - edgeFactor * 14);
-
             return (
               <div
                 key={`refracted-${item.id}`}
@@ -848,22 +852,6 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                   boxSizing: 'border-box',
                 }}
               >
-                {/* Dynamic Curved Optical Light Sweep (Shifts with lens angle like real curved liquid glass) */}
-                {glintIntensityVal > 0.05 && (
-                  <div
-                    className="absolute pointer-events-none rounded-full"
-                    style={{
-                      position: 'absolute',
-                      width: `${iconSize * 1.85}px`,
-                      height: `${iconSize * 1.85}px`,
-                      background: `radial-gradient(circle at ${lightCenterX}% ${lightCenterY}%, rgba(255, 255, 255, ${0.28 * (coreFactor * 0.65 + edgeFactor * 0.45) * glintIntensityVal}) 0%, rgba(255, 255, 255, 0.06) 45%, transparent 70%)`,
-                      opacity: Math.max(coreFactor, edgeFactor * 0.88),
-                      transform: `scale(${0.92 + coreFactor * 0.18 + jellyWobble * 0.15})`,
-                      transition: (isAnimating || isDragging) ? 'none' : 'opacity 220ms ease, transform 220ms ease',
-                    }}
-                  />
-                )}
-
                 <div
                   className="relative flex items-center justify-center text-zinc-100 font-bold"
                   style={{
@@ -874,7 +862,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                     // Rich 3D spherical liquid glass meniscus curvature & organic settle dance
                     transform: `perspective(180px) translate3d(${microPullX}px, 0, 0) rotateX(${domeCurvatureY}deg) rotateY(${domeCurvatureX}deg) rotateZ(${danceTwistZ}deg) skewX(${microSkewX}deg) scale(${totalScaleX}, ${totalScaleY})`,
                     transformOrigin: 'center center',
-                    filter: `drop-shadow(0 0 ${2 + coreFactor * 4}px rgba(255, 255, 255, ${(coreFactor * 0.40) * reflectivity})) drop-shadow(${glintOffset}px 0 ${1.5 + edgeFactor * 1.5}px rgba(255, 255, 255, ${glintIntensityVal * 0.5})) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))`,
+                    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))',
                     transition: (isAnimating || isDragging) ? 'none' : 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1)',
                     willChange: 'transform',
                     isolation: 'isolate',
@@ -902,8 +890,8 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             inset: 0,
             borderRadius: '9999px',
             boxShadow: isDragging
-              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28), inset 0 0 12px rgba(255, 255, 255, 0.12)'
-              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.08)',
+              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28)'
+              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15)',
             transition: 'box-shadow 260ms ease',
           }}
         />

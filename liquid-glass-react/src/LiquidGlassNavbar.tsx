@@ -568,6 +568,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   const trackContent = (
     <div
       ref={trackRef}
+      data-liquid-track=""
       onPointerDown={handlePointerDown}
       onWheel={(e) => e.stopPropagation()}
       className={`relative w-full h-full select-none touch-none cursor-grab active:cursor-grabbing ${className}`}

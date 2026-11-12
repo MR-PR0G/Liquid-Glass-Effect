@@ -227,7 +227,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   backdrop,
   refraction = 0.344,
   bevel = 28,
-  dispersion = 0.28,
+  dispersion = 0.0,
   blur = 0,
   darkTint = 0.15,
   darkTintStep = 2,
@@ -267,24 +267,6 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   useImperativeHandle(ref, () => containerRef.current!, []);
-
-  const [autoBackdrop, setAutoBackdrop] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (backdrop !== undefined) return;
-    const el = containerRef.current;
-    if (!el) return;
-    const candidate =
-      (el.closest('[data-liquid-backdrop]') as HTMLElement | null) ||
-      (el.parentElement?.closest('section, main, [class*="min-h-screen"], [class*="bg-"]') as HTMLElement | null) ||
-      el.parentElement ||
-      document.body;
-    if (candidate && candidate instanceof HTMLElement) {
-      setAutoBackdrop(candidate);
-    }
-  }, [backdrop]);
-
-  const effectiveBackdrop = backdrop !== undefined ? backdrop : autoBackdrop;
 
   const [internalTensionX, setInternalTensionX] = useState(0);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
@@ -349,7 +331,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               }
             }}
             onTension={handleTension}
-            backdropRef={effectiveBackdrop as any}
+            backdropRef={backdrop as any}
             darkTint={darkTint}
             darkTintStep={darkTintStep ?? 2}
             refraction={refraction * (0.70 + (thicknessStep / 10) * 0.75)}
@@ -466,6 +448,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   return (
     <div
       ref={containerRef}
+      data-liquid-glass=""
       className={`relative select-none flex items-center justify-center ${className}`}
       style={{
         height: resolvedHeight,
@@ -484,7 +467,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
     >
       {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Always Active for True Physical Liquid Glass) */}
       <SoapBubbleSurface
-        backdrop={effectiveBackdrop}
+        backdrop={backdrop}
         interactive={interactive}
         wobble={wobble}
         radius={effectiveTopRadius}

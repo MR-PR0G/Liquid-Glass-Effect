@@ -999,7 +999,7 @@ const backdrops = new Map<HTMLElement, BackdropEntry>();
 // Changes inside any surface (labels, moving thumbs, ready flags) are left
 // out of the snapshot anyway and must not trigger another capture. A group
 // (a menu, a burst) holds only surfaces, so it is left out the same way.
-const bubbleSelector = '[data-soap-bubble], [data-soap-bubble-group]';
+const bubbleSelector = '[data-soap-bubble], [data-soap-bubble-group], [data-liquid-glass], [data-liquid-track], .liquid-glass-nav';
 const insideSurface = (node: Node) =>
   (node instanceof Element ? node : node.parentElement)?.closest(bubbleSelector) != null;
 const groupSelector = '[data-soap-bubble-group]';
@@ -1085,7 +1085,8 @@ function schedule(entry: BackdropEntry) {
     void capture(entry);
     return;
   }
-  entry.timer = window.setTimeout(() => void capture(entry), 16);
+  // Debounce DOM captures so animation/interaction remains 120 FPS buttery smooth
+  entry.timer = window.setTimeout(() => void capture(entry), 350);
 }
 
 export function notifyBackdropChanged(element: HTMLElement | null) {

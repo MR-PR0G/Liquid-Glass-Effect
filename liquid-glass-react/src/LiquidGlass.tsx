@@ -301,6 +301,28 @@ function drawStripesPattern(canvas: HTMLCanvasElement) {
   }
 }
 
+const WALLPAPER_CANVAS_ID = 'liquid-glass-wallpaper-canvas';
+
+function updateWallpaperCanvas(canvas: HTMLCanvasElement, type: 'cross' | 'stripes') {
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const targetW = Math.round(w * dpr);
+  const targetH = Math.round(h * dpr);
+
+  if (canvas.width !== targetW || canvas.height !== targetH || canvas.dataset.wallpaper !== type) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+    canvas.dataset.wallpaper = type;
+    if (type === 'stripes') {
+      drawStripesPattern(canvas);
+    } else {
+      drawCrossPattern(canvas);
+    }
+    notifyBackdropChanged(canvas);
+  }
+}
+
 export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   mode = 'empty',
   backdrop,
@@ -351,33 +373,44 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const shouldRenderWallpaper = backdrop === undefined && wallpaper !== 'none';
-  const effectiveBackdrop = backdrop !== undefined ? backdrop : (shouldRenderWallpaper ? internalCanvasRef : null);
+  const [existingCanvas, setExistingCanvas] = useState<HTMLCanvasElement | null>(() => {
+    if (typeof document !== 'undefined') {
+      return document.getElementById(WALLPAPER_CANVAS_ID) as HTMLCanvasElement | null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const found = document.getElementById(WALLPAPER_CANVAS_ID) as HTMLCanvasElement | null;
+      if (found && found !== internalCanvasRef.current) {
+        setExistingCanvas(found);
+      }
+    }
+  }, []);
+
+  const isMasterCanvasOwner = !existingCanvas;
 
   useEffect(() => {
     if (!shouldRenderWallpaper) return;
-    const canvas = internalCanvasRef.current;
+    const canvas = isMasterCanvasOwner ? internalCanvasRef.current : existingCanvas;
     if (!canvas) return;
 
     const render = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-      }
-      if (wallpaper === 'stripes') {
-        drawStripesPattern(canvas);
-      } else {
-        drawCrossPattern(canvas);
-      }
-      notifyBackdropChanged(canvas);
+      updateWallpaperCanvas(canvas, wallpaper as 'cross' | 'stripes');
     };
 
     render();
     window.addEventListener('resize', render);
     return () => window.removeEventListener('resize', render);
-  }, [shouldRenderWallpaper, wallpaper]);
+  }, [shouldRenderWallpaper, wallpaper, isMasterCanvasOwner, existingCanvas]);
+
+  const effectiveCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  effectiveCanvasRef.current = isMasterCanvasOwner ? internalCanvasRef.current : existingCanvas;
+
+  const effectiveBackdrop = backdrop !== undefined 
+    ? backdrop 
+    : (shouldRenderWallpaper ? effectiveCanvasRef : null);
 
   const [internalTensionX, setInternalTensionX] = useState(0);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
@@ -484,6 +517,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
       return (
         <div
           className="flex items-center justify-center w-full h-full cursor-grab active:cursor-grabbing select-none px-4"
+          style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}
           onPointerDown={(e) => {
             const startX = e.clientX;
             const onMove = (ev: PointerEvent) => {
@@ -511,7 +545,10 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 
     if (mode === 'player') {
       return (
-        <div className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto px-4">
+        <div 
+          className="flex items-center gap-3 sm:gap-6 text-zinc-200 pointer-events-auto px-4"
+          style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}
+        >
           <div className="flex items-center gap-2">
             <svg 
               width={16} 
@@ -578,12 +615,11 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 
   return (
     <>
-      {/* High-Performance Canvas Wallpaper for Hardware Snell Ray-Tracing */}
-      {shouldRenderWallpaper && (
+      {shouldRenderWallpaper && isMasterCanvasOwner && (
         <canvas
           ref={internalCanvasRef}
+          id={WALLPAPER_CANVAS_ID}
           data-liquid-glass-wallpaper=""
-          className="fixed inset-0 pointer-events-none"
           style={{
             position: 'fixed',
             top: 0,
@@ -598,23 +634,23 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
 
       <div
         ref={containerRef}
-        data-liquid-glass=""
-        className={`relative select-none flex items-center justify-center ${className}`}
-        style={{
-          height: resolvedHeight,
-          minHeight: resolvedHeight,
-          width: resolvedWidth,
-          maxWidth: resolvedMaxWidth,
-          borderRadius: radiusCss,
-          backgroundColor: darkTintRgba,
-          boxShadow: glassShadow,
-          transform: `translate3d(${currentTensionX}px, 0, 0)`,
-          transition: transitionTiming,
-          boxSizing: 'border-box',
-          ...style,
-        }}
-        {...rest}
-      >
+      data-liquid-glass=""
+      className={`relative select-none flex items-center justify-center ${className}`}
+      style={{
+        height: resolvedHeight,
+        minHeight: resolvedHeight,
+        width: resolvedWidth,
+        maxWidth: resolvedMaxWidth,
+        borderRadius: radiusCss,
+        backgroundColor: darkTintRgba,
+        boxShadow: glassShadow,
+        transform: `translate3d(${currentTensionX}px, 0, 0)`,
+        transition: transitionTiming,
+        boxSizing: 'border-box',
+        ...style,
+      }}
+      {...rest}
+    >
         {/* 1. Hardware WebGL Snell Ray-Tracing Layer (Always Active for True Physical Liquid Glass) */}
         <SoapBubbleSurface
           backdrop={effectiveBackdrop}

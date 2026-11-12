@@ -193,6 +193,8 @@ export interface LiquidGlassProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   wobble?: number;
   /** Fresnel surface reflectivity (default 0.0) */
   reflectivity?: number;
+  /** Meniscus light sweep and specular glint intensity (default 0.75) */
+  glintIntensity?: number;
 
   // Mode: 'nav' props
   items?: NavbarItem[];
@@ -248,7 +250,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
   onTension,
   interactive = false,
   wobble = 0,
-  reflectivity = 0.0,
+  reflectivity = 0.35,
+  glintIntensity = 0.75,
   className = '',
   style = {},
   // Mode-specific props
@@ -336,14 +339,20 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
             darkTintStep={darkTintStep ?? 2}
             refraction={refraction * (0.70 + (thicknessStep / 10) * 0.75)}
             bevel={Math.round(bevel * (0.75 + (thicknessStep / 10) * 0.55))}
+            dispersion={dispersion}
+            reflectivity={reflectivity}
+            glintIntensity={glintIntensity}
+            accentColor={accentColor}
             viscosity={viscosity}
             viscosityStep={viscosityStep}
             thickness={thickness}
             thicknessStep={thicknessStep}
             blur={blur}
             borderOpacity={borderOpacity}
+            borderGradient={borderGradient}
             shadowTone={shadowTone}
             shadowStep={shadowStep}
+            isShadowInverted={isShadowInverted}
           />
         </div>
       );

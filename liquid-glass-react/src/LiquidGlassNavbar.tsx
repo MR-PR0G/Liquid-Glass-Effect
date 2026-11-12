@@ -24,6 +24,10 @@ export interface LiquidGlassNavbarProps {
   darkTintStep?: number;
   refraction?: number;
   bevel?: number;
+  dispersion?: number;
+  reflectivity?: number;
+  glintIntensity?: number;
+  accentColor?: string;
   saturation?: number;
   specular?: number;
   viscosity?: number;
@@ -62,6 +66,11 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
   darkTintStep,
   refraction = 0.34,
   bevel = 28,
+  dispersion = 0.0,
+  reflectivity = 0.35,
+  glintIntensity = 0.75,
+  iridescence = 0,
+  accentColor = '#ffffff',
   viscosity = 0.60,
   viscosityStep = 5,
   thickness = 450,
@@ -580,7 +589,20 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       }}
     >
       {/* 1. Base Track Icons (Stable resting layer across the tab bar, always visible until lens covers them) */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
+      <div 
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10,
+          pointerEvents: 'none',
+        }}
+      >
         {items.map((item, idx) => {
           const Icon = item.icon;
           const iconCenterX = getSlotCenterX(idx);
@@ -600,6 +622,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
               key={`base-${item.id}`}
               className="absolute pointer-events-auto cursor-pointer group"
               style={{
+                position: 'absolute',
                 top: 0,
                 bottom: 0,
                 height: '100%',
@@ -609,6 +632,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxSizing: 'border-box',
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -623,6 +647,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
               <div
                 className="relative flex items-center justify-center transition-colors duration-200"
                 style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   color: baseOpacity < 0.05 ? 'transparent' : `rgba(161, 161, 170, ${baseOpacity})`,
                   transform: `scale(${baseScale})`,
                   transition: (isDragging || isAnimating) ? 'none' : 'color 220ms ease, transform 220ms ease',
@@ -631,7 +659,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
               >
                 <Icon size={iconSize} strokeWidth={2.0} className="group-hover:text-zinc-200 transition-colors duration-150" />
                 {item.badge && baseOpacity > 0.1 && (
-                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00e5ff]" />
+                  <span 
+                    className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00e5ff]"
+                    style={{ position: 'absolute', top: '-4px', right: '-4px', width: '6px', height: '6px', borderRadius: '9999px' }}
+                  />
                 )}
               </div>
             </div>
@@ -644,6 +675,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
       <div
         className="absolute pointer-events-none overflow-hidden will-change-transform rounded-full"
         style={{
+          position: 'absolute',
           top: '50%',
           left: `${bubbleCenterX}px`,
           width: `${currentWidth}px`,
@@ -652,6 +684,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           transformOrigin: 'center center',
           borderRadius: '9999px',
           zIndex: 20,
+          boxSizing: 'border-box',
           // Always smooth fluid size and styling transitions (fixes stiff jump on tab release)
           transition: 'width 380ms cubic-bezier(0.22, 1, 0.36, 1), height 380ms cubic-bezier(0.22, 1, 0.36, 1), background-color 280ms ease, box-shadow 280ms ease, border 280ms ease',
 
@@ -678,7 +711,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
         {/* 1. Physical Snell Ray-Tracing Layer (WebGL wallpaper refraction & curved meniscus dome) */}
         <div
           className="absolute inset-0 w-full h-full pointer-events-none rounded-full overflow-hidden"
-          style={{ borderRadius: '9999px' }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', borderRadius: '9999px' }}
         >
           <SoapBubbleSurface
             ref={lensSurfaceRef}
@@ -691,20 +724,20 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             glass={1}
             refraction={((thicknessStep ?? 5) >= 9 ? refraction * 2.85 : refraction) * 1.25}
             bevel={Math.round(((thicknessStep ?? 5) >= 9 ? bevel * 2.3 : bevel) * 0.85)}
-            dispersion={0}
+            dispersion={dispersion}
             blur={blur}
             clearCenter={1}
             oilCoverage={0}
             oilOpacity={0}
-            iridescence={0}
-            glintIntensity={0}
-            reflectivity={0.0}
+            iridescence={iridescence ?? 0}
+            glintIntensity={glintIntensity}
+            reflectivity={reflectivity}
             thickness={thickness}
-            windowLight={false}
-            windowIntensity={0}
-            floorLight={0}
-            bottomShade={false}
-            keyLight={false}
+            windowLight={true}
+            windowIntensity={0.25}
+            floorLight={0.15}
+            bottomShade={true}
+            keyLight={true}
             speed={0}
             paused={false}
             tint="transparent"
@@ -717,13 +750,31 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
         <div
           className="absolute inset-0 w-full h-full pointer-events-none rounded-full"
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             borderRadius: '9999px',
             backgroundColor: `rgba(4, 7, 14, ${lensDarkTint})`,
           }}
         />
 
         {/* 2. Refracted Optical Content Layer (Strictly clipped inside the real bubble capsule!) */}
-        <div className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 35 }}>
+        <div 
+          className="absolute inset-0 w-full h-full pointer-events-none" 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 35,
+            pointerEvents: 'none',
+          }}
+        >
           {items.map((item, idx) => {
             const Icon = item.icon;
             const iconCenterX = getSlotCenterX(idx);
@@ -771,24 +822,59 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             const totalScaleX = baseScale * iconBounce * microStretchX;
             const totalScaleY = baseScale * iconBounce * microCompressY;
 
+            // 3. Meniscus Caustic Arc Light Sweep (Starts at corner, sweeps to center):
+            const glintOffset = -signedEdge * 4.8;
+            const glintIntensityVal = (edgeFactor * 0.95 + coreFactor * 0.35) * glintIntensity;
+            const lightCenterX = Math.max(10, Math.min(90, Math.round(50 - signedEdge * 38)));
+            const lightCenterY = Math.round(50 - edgeFactor * 14);
+
             return (
               <div
                 key={`refracted-${item.id}`}
                 className="absolute top-0 bottom-0 h-full flex items-center justify-center pointer-events-none"
                 style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  height: '100%',
                   left: `calc(50% + ${deltaX}px)`,
                   transform: 'translate3d(-50%, 0, 0)',
                   width: `${slotWidth}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   opacity: 1, // Naturally clipped by lens capsule overflow-hidden with zero blur dip
+                  pointerEvents: 'none',
+                  boxSizing: 'border-box',
                 }}
               >
+                {/* Dynamic Curved Optical Light Sweep (Shifts with lens angle like real curved liquid glass) */}
+                {glintIntensityVal > 0.05 && (
+                  <div
+                    className="absolute pointer-events-none rounded-full"
+                    style={{
+                      position: 'absolute',
+                      width: `${iconSize * 1.85}px`,
+                      height: `${iconSize * 1.85}px`,
+                      background: `radial-gradient(circle at ${lightCenterX}% ${lightCenterY}%, rgba(255, 255, 255, ${0.28 * (coreFactor * 0.65 + edgeFactor * 0.45) * glintIntensityVal}) 0%, rgba(255, 255, 255, 0.06) 45%, transparent 70%)`,
+                      opacity: Math.max(coreFactor, edgeFactor * 0.88),
+                      transform: `scale(${0.92 + coreFactor * 0.18 + jellyWobble * 0.15})`,
+                      transition: (isAnimating || isDragging) ? 'none' : 'opacity 220ms ease, transform 220ms ease',
+                    }}
+                  />
+                )}
+
                 <div
                   className="relative flex items-center justify-center text-zinc-100 font-bold"
                   style={{
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     // Rich 3D spherical liquid glass meniscus curvature & organic settle dance
                     transform: `perspective(180px) translate3d(${microPullX}px, 0, 0) rotateX(${domeCurvatureY}deg) rotateY(${domeCurvatureX}deg) rotateZ(${danceTwistZ}deg) skewX(${microSkewX}deg) scale(${totalScaleX}, ${totalScaleY})`,
                     transformOrigin: 'center center',
-                    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))',
+                    filter: `drop-shadow(0 0 ${2 + coreFactor * 4}px rgba(255, 255, 255, ${(coreFactor * 0.40) * reflectivity})) drop-shadow(${glintOffset}px 0 ${1.5 + edgeFactor * 1.5}px rgba(255, 255, 255, ${glintIntensityVal * 0.5})) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.90))`,
                     transition: (isAnimating || isDragging) ? 'none' : 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1)',
                     willChange: 'transform',
                     isolation: 'isolate',
@@ -797,7 +883,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                 >
                   <Icon size={iconSize} strokeWidth={2.2} />
                   {item.badge && (
-                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00e5ff]" />
+                    <span 
+                      className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00e5ff]"
+                      style={{ position: 'absolute', top: '-4px', right: '-4px', width: '6px', height: '6px', borderRadius: '9999px' }}
+                    />
                   )}
                 </div>
               </div>
@@ -809,10 +898,12 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
         <div
           className="absolute inset-0 pointer-events-none rounded-full"
           style={{
+            position: 'absolute',
+            inset: 0,
             borderRadius: '9999px',
             boxShadow: isDragging
-              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28)'
-              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15)',
+              ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.28), inset 0 0 12px rgba(255, 255, 255, 0.12)'
+              : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.40), inset 0 -1px 1.5px rgba(0, 0, 0, 0.35), inset 0 0 0 0.75px rgba(255, 255, 255, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.08)',
             transition: 'box-shadow 260ms ease',
           }}
         />

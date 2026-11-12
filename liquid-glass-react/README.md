@@ -32,30 +32,70 @@ yarn add @mr-prog/liquid-glass
 
 ## Quick Start
 
-### 1. Interactive Liquid Glass Navbar (Flagship Tab Bar)
+### 1. Minimal One-Line Usage (`mode="nav"`)
 
-The flagship draggable liquid lens navbar with continuous 3D meniscus wave refraction:
+Call the flagship liquid glass navbar with standard defaults in just one line:
+
+```tsx
+import { LiquidGlass } from '@mr-prog/liquid-glass';
+import '@mr-prog/liquid-glass/liquid-glass.css';
+
+export function Navigation() {
+  return <LiquidGlass mode="nav" />;
+}
+```
+
+### 2. Available Modes
+
+The `<LiquidGlass />` component supports four distinct built-in modes:
+
+- `mode="nav"`: Flagship draggable squircle liquid lens tab bar (Home, Search, Explore, Alerts).
+- `mode="player"`: Minimalist Cupertino audio glass player with playback controls.
+- `mode="text"`: Ray-traced typography with elastic fluid drag viscosity.
+- `mode="empty"`: Empty translucent liquid glass container for custom children.
+
+```tsx
+{/* Interactive Tab Bar */}
+<LiquidGlass mode="nav" />
+
+{/* Audio Glass Player */}
+<LiquidGlass mode="player" />
+
+{/* Fluid Viscosity Text */}
+<LiquidGlass mode="text" text="LIQUID GLASS" />
+
+{/* Custom Glass Card / Container */}
+<LiquidGlass mode="empty" radius={24} className="p-6">
+  <h2 className="text-white text-xl font-bold">Custom Content</h2>
+</LiquidGlass>
+```
+
+### 3. Customizing the Navbar
+
+Pass custom items, active index, or theme options directly:
 
 ```tsx
 import { useState } from 'react';
-import { LiquidGlassNavbar } from '@mr-prog/liquid-glass';
+import { LiquidGlass } from '@mr-prog/liquid-glass';
 import { Home, Compass, Bell, User } from 'lucide-react';
+import '@mr-prog/liquid-glass/liquid-glass.css';
 
-export function Navigation() {
+export function CustomNav() {
   const [active, setActive] = useState(0);
 
   return (
-    <LiquidGlassNavbar
+    <LiquidGlass
+      mode="nav"
+      activeIndex={active}
+      onChange={(idx) => setActive(idx)}
       items={[
         { id: 'home', label: 'Home', icon: Home },
         { id: 'explore', label: 'Explore', icon: Compass },
         { id: 'alerts', label: 'Alerts', icon: Bell, badge: true },
         { id: 'profile', label: 'Profile', icon: User },
       ]}
-      activeIndex={active}
-      onChange={(index) => setActive(index)}
-      accentColor="#00e5ff"
-      shadowTone="3d"
+      shadowTone="dark"
+      shadowStep={5}
     />
   );
 }

@@ -2751,91 +2751,537 @@ import '@mr-prog/liquid-glass/liquid-glass.css';
 
             {/* TAB 3: Props & Variables Matrix */}
             {docTab === 'props' && (
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-3 font-mono text-xs">
-                <span className="text-zinc-300 font-bold text-xs block">Active Config vs Parameters Matrix:</span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]">
-                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                    <span className="text-zinc-400 block text-[9px]">REFRACTION</span>
-                    <span className="text-cyan-400 font-bold">{config.refraction}</span>
+              <div className="p-3 sm:p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-4 font-mono text-xs">
+                
+                {/* 1. Live Active Config Dashboard */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-zinc-200 font-bold text-xs flex items-center gap-1.5">
+                      <Sliders size={13} className="text-cyan-400" />
+                      Live Active Config vs Props:
+                    </span>
+                    <span className="text-[10px] text-zinc-500 font-mono">Updates dynamically with controls</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                    <span className="text-zinc-400 block text-[9px]">BEVEL</span>
-                    <span className="text-cyan-400 font-bold">{config.bevel}px</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                    <span className="text-zinc-400 block text-[9px]">DISPERSION</span>
-                    <span className="text-cyan-400 font-bold">{config.dispersion}</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                    <span className="text-zinc-400 block text-[9px]">BLUR</span>
-                    <span className="text-cyan-400 font-bold">{config.blur}px</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                    <span className="text-zinc-400 block text-[9px]">DARK TINT</span>
-                    <span className="text-cyan-400 font-bold">{config.darkTint}</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
-                    <span className="text-zinc-400 block text-[9px]">RADIUS</span>
-                    <span className="text-cyan-400 font-bold">{config.radius >= 999 ? 'Capsule' : `${config.radius}px`}</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 text-[11px]">
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">REFRACTION</span>
+                      <span className="text-cyan-300 font-bold">{config.refraction.toFixed(3)}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">BEVEL</span>
+                      <span className="text-cyan-300 font-bold">{config.bevel}px</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">DISPERSION</span>
+                      <span className="text-cyan-300 font-bold">{config.dispersion.toFixed(3)}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">BLUR</span>
+                      <span className="text-cyan-300 font-bold">{config.blur}px</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">DARK TINT</span>
+                      <span className="text-cyan-300 font-bold">{(config.darkTint ?? 0.15).toFixed(2)}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">TINT COLOR</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full border border-white/30" style={{ backgroundColor: tintColor }} />
+                        <span className="text-cyan-300 font-bold">{tintColor}</span>
+                      </div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">THICKNESS</span>
+                      <span className="text-sky-300 font-bold">{config.thickness ?? 475}nm</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">VISCOSITY</span>
+                      <span className="text-sky-300 font-bold">{(config.viscosity ?? 0.58).toFixed(2)}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">SHADOW TONE</span>
+                      <span className="text-purple-300 font-bold capitalize">{shadowTone}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">CAUSTIC AURA</span>
+                      <span className={isShadowInverted ? 'text-amber-400 font-bold' : 'text-zinc-500'}>
+                        {isShadowInverted ? 'Inverted 360°' : 'Drop Shadow'}
+                      </span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">TOP / BOT RADIUS</span>
+                      <span className="text-emerald-300 font-bold">
+                        {topRadiusStep >= 10 ? 'Capsule' : `${Math.round(topRadiusStep * 4.2)}px`} / {bottomRadiusStep >= 10 ? 'Capsule' : `${Math.round(bottomRadiusStep * 4.2)}px`}
+                      </span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/50 border border-white/10">
+                      <span className="text-zinc-400 block text-[9px]">BORDER PRESET</span>
+                      <span className="text-emerald-300 font-bold capitalize">{borderPreset}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto text-[11px] text-zinc-300">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/10 text-zinc-400 text-[10px]">
-                        <th className="py-1 px-2">PROP</th>
-                        <th className="py-1 px-2">TYPE</th>
-                        <th className="py-1 px-2">DEFAULT</th>
-                        <th className="py-1 px-2">DESCRIPTION</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">mode</td>
-                        <td className="py-1.5 px-2 text-zinc-400">'nav' | 'text' | 'player' | 'empty'</td>
-                        <td className="py-1.5 px-2 text-zinc-400">'empty'</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Built-in showcase mode or custom container</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">refraction</td>
-                        <td className="py-1.5 px-2 text-zinc-400">number</td>
-                        <td className="py-1.5 px-2 text-zinc-400">0.35</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Snell's law ray-tracing refraction power</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">bevel</td>
-                        <td className="py-1.5 px-2 text-zinc-400">number</td>
-                        <td className="py-1.5 px-2 text-zinc-400">28</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Meniscus curvature width in pixels</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">dispersion</td>
-                        <td className="py-1.5 px-2 text-zinc-400">number</td>
-                        <td className="py-1.5 px-2 text-zinc-400">0.28</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Prism chromatic wavelength splitting</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">viscosity</td>
-                        <td className="py-1.5 px-2 text-zinc-400">number</td>
-                        <td className="py-1.5 px-2 text-zinc-400">0.60</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Fluid drag boundary tension resistance</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">shadowTone</td>
-                        <td className="py-1.5 px-2 text-zinc-400">'3d' | 'dark' | 'light'</td>
-                        <td className="py-1.5 px-2 text-zinc-400">'3d'</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Elevation shadow & ambient light personality</td>
-                      </tr>
-                      <tr>
-                        <td className="py-1.5 px-2 text-cyan-300 font-bold">isShadowInverted</td>
-                        <td className="py-1.5 px-2 text-zinc-400">boolean</td>
-                        <td className="py-1.5 px-2 text-zinc-400">false</td>
-                        <td className="py-1.5 px-2 font-sans text-xs">Converts shadow into 360° internal caustic aura</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                {/* 2. Categorized Master Props Table */}
+                <div className="space-y-4">
+
+                  {/* Section A: Optical Ray-Tracing & Snell Physics */}
+                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                    <div className="bg-white/[0.05] px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-cyan-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <Sparkles size={12} />
+                        1. Optical Ray-Tracing & Snell Physics
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">Hardware WebGL2 Single-Pass</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-400 text-[10px] bg-white/[0.02]">
+                            <th className="py-2 px-3">Prop</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Default</th>
+                            <th className="py-2 px-3">Range / Values</th>
+                            <th className="py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-zinc-300">
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">refraction</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0.344</td>
+                            <td className="py-2 px-3 text-zinc-400">0.00 – 1.00</td>
+                            <td className="py-2 px-3 font-sans text-xs">Snell's law physical refraction index. Dictates the angle and power of light bending through the glass meniscus edges.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">bevel</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">28</td>
+                            <td className="py-2 px-3 text-zinc-400">4 – 64 px</td>
+                            <td className="py-2 px-3 font-sans text-xs">Meniscus curvature bevel width in pixels. Defines where light bends while preserving an undistorted clear center.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">dispersion</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0.28</td>
+                            <td className="py-2 px-3 text-zinc-400">0.00 – 1.00</td>
+                            <td className="py-2 px-3 font-sans text-xs">Prismatic chromatic dispersion. Splits red and blue spectral wavelengths along curved borders for an authentic optical look.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">blur</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 20 px</td>
+                            <td className="py-2 px-3 font-sans text-xs">Concentric Gaussian frosted diffusion in pixels. 0 keeps the glass 100% transparent and clear; higher values add luxury frosted glass diffusion.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">thickness</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">450</td>
+                            <td className="py-2 px-3 text-zinc-400">150 – 750 nm</td>
+                            <td className="py-2 px-3 font-sans text-xs">Volumetric glass dome thickness in nanometers. Modulates refraction chord depth and specular rim bounce.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">thicknessStep</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">5</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 10</td>
+                            <td className="py-2 px-3 font-sans text-xs">Discrete step multiplier for thickness (0 = ultra-thin, 5 = balanced, 9-10 = hyper-refractive convex lens).</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Section B: Color, Tints & Translucency */}
+                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                    <div className="bg-white/[0.05] px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-amber-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <Palette size={12} />
+                        2. Color, Tints & Translucency
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">Linear sRGB Conversion</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-400 text-[10px] bg-white/[0.02]">
+                            <th className="py-2 px-3">Prop</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Default</th>
+                            <th className="py-2 px-3">Range / Values</th>
+                            <th className="py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-zinc-300">
+                          <tr>
+                            <td className="py-2 px-3 text-amber-300 font-bold">darkTint</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0.15</td>
+                            <td className="py-2 px-3 text-zinc-400">0.00 – 0.75</td>
+                            <td className="py-2 px-3 font-sans text-xs">Translucent dark absorption layer. 0.00 is crystal clear water-white glass, 0.15 is smoked luxury glass, 0.40+ is obsidian dark glass.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-amber-300 font-bold">darkTintStep</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">5</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 10</td>
+                            <td className="py-2 px-3 font-sans text-xs">Discrete darkness step corresponding to generator slider presets.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-amber-300 font-bold">tintColor</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">"#000000"</td>
+                            <td className="py-2 px-3 text-zinc-400">Hex color string</td>
+                            <td className="py-2 px-3 font-sans text-xs">Custom base glass tint color (e.g. #000000 for neutral obsidian, #0c192c for sapphire dark, #1e0826 for amethyst violet).</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Section C: Geometry, Squircles & Chromatic Borders */}
+                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                    <div className="bg-white/[0.05] px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-emerald-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <Box size={12} />
+                        3. Geometry, Squircles & Chromatic Borders
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">Continuous Curvature (G2 Squircle)</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-400 text-[10px] bg-white/[0.02]">
+                            <th className="py-2 px-3">Prop</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Default</th>
+                            <th className="py-2 px-3">Range / Values</th>
+                            <th className="py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-zinc-300">
+                          <tr>
+                            <td className="py-2 px-3 text-emerald-300 font-bold">radius</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">9999</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 9999 px</td>
+                            <td className="py-2 px-3 font-sans text-xs">Global corner radius in pixels. 9999 creates a pill/capsule shape; 16–36 creates modern squircle cards.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-emerald-300 font-bold">topRadius</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">undefined</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 9999 px</td>
+                            <td className="py-2 px-3 font-sans text-xs">Independent top corner radius in pixels. Allows asymmetric card geometries when unlinked from bottom corners.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-emerald-300 font-bold">bottomRadius</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">undefined</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 9999 px</td>
+                            <td className="py-2 px-3 font-sans text-xs">Independent bottom corner radius in pixels.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-emerald-300 font-bold">borderOpacity</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0.18</td>
+                            <td className="py-2 px-3 text-zinc-400">0.00 – 1.00</td>
+                            <td className="py-2 px-3 font-sans text-xs">Specular glass border stroke opacity. 0.00 gives a completely rimless seamless finish; 0.20-0.40 gives a sharp diamond rim.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-emerald-300 font-bold">borderGradient</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">undefined</td>
+                            <td className="py-2 px-3 text-zinc-400">CSS linear-gradient</td>
+                            <td className="py-2 px-3 font-sans text-xs">Custom CSS gradient for chromatic rim lighting (e.g. Prism Rainbow, Electric Cyan, Sunset Gold, Liquid Chrome).</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Section D: 3D Elevation & Inverted Caustic Aura */}
+                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                    <div className="bg-white/[0.05] px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-purple-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <Sun size={12} />
+                        4. 3D Elevation & Inverted Caustic Aura
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">Multi-Layer Ambient Physics</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-400 text-[10px] bg-white/[0.02]">
+                            <th className="py-2 px-3">Prop</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Default</th>
+                            <th className="py-2 px-3">Range / Values</th>
+                            <th className="py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-zinc-300">
+                          <tr>
+                            <td className="py-2 px-3 text-purple-300 font-bold">shadowStep</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">5</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 10</td>
+                            <td className="py-2 px-3 font-sans text-xs">External drop shadow elevation scale. 0 is flat on backdrop; 10 produces high-altitude luxury elevation.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-purple-300 font-bold">shadowTone</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">'3d'</td>
+                            <td className="py-2 px-3 text-zinc-400">'3d' | 'dark' | 'light'</td>
+                            <td className="py-2 px-3 font-sans text-xs">Ambient lighting tone. '3d' uses physical multi-bounce ambient occlusion; 'dark' uses deep luxury shadows; 'light' casts a soft neon rim glow.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-purple-300 font-bold">isShadowInverted</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">boolean</td>
+                            <td className="py-2 px-3 text-zinc-400">false</td>
+                            <td className="py-2 px-3 text-zinc-400">true | false</td>
+                            <td className="py-2 px-3 font-sans text-xs">Inverts external drop shadow into an internal 360° caustic refraction aura falling into the glass capsule.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Section E: Fluid Dynamics & Drag Viscosity */}
+                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                    <div className="bg-white/[0.05] px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-sky-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <Gauge size={12} />
+                        5. Fluid Dynamics & Drag Viscosity
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">Viscoelastic Spring Mechanics</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-400 text-[10px] bg-white/[0.02]">
+                            <th className="py-2 px-3">Prop</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Default</th>
+                            <th className="py-2 px-3">Range / Values</th>
+                            <th className="py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-zinc-300">
+                          <tr>
+                            <td className="py-2 px-3 text-sky-300 font-bold">viscosity</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0.60</td>
+                            <td className="py-2 px-3 text-zinc-400">0.10 – 1.00</td>
+                            <td className="py-2 px-3 font-sans text-xs">Fluid drag tension resistance. Low values create liquid loose jelly wobble; high values create stiff viscoelastic glass give.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-sky-300 font-bold">viscosityStep</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">5</td>
+                            <td className="py-2 px-3 text-zinc-400">0 – 10</td>
+                            <td className="py-2 px-3 font-sans text-xs">Discrete viscosity step corresponding to generator sliders.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-sky-300 font-bold">tensionX</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0</td>
+                            <td className="py-2 px-3 text-zinc-400">-120 to +120 px</td>
+                            <td className="py-2 px-3 font-sans text-xs">Direct horizontal fluid elastic stretch offset in pixels.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-sky-300 font-bold">onTension</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">(x: number) =&gt; void</td>
+                            <td className="py-2 px-3 text-zinc-400">undefined</td>
+                            <td className="py-2 px-3 text-zinc-400">Function callback</td>
+                            <td className="py-2 px-3 font-sans text-xs">Fires during horizontal pointer drag with instantaneous elastic tension displacement.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-sky-300 font-bold">interactive</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">boolean</td>
+                            <td className="py-2 px-3 text-zinc-400">true</td>
+                            <td className="py-2 px-3 text-zinc-400">true | false</td>
+                            <td className="py-2 px-3 font-sans text-xs">Enables surface wave deformation and organic press reactions on mouse hover and touch clicks.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-sky-300 font-bold">reflectivity</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">0.65</td>
+                            <td className="py-2 px-3 text-zinc-400">0.00 – 1.00</td>
+                            <td className="py-2 px-3 font-sans text-xs">Top surface Fresnel glaze reflection intensity. Adds top light bounce across the glass dome.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Section F: Modes & Preset Handlers */}
+                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                    <div className="bg-white/[0.05] px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-cyan-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <Layers size={12} />
+                        6. Modes & Preset Handlers
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">Plug-and-Play Component Presets</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-zinc-400 text-[10px] bg-white/[0.02]">
+                            <th className="py-2 px-3">Prop</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Default</th>
+                            <th className="py-2 px-3">Applies To</th>
+                            <th className="py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-zinc-300">
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">mode</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">'nav'</td>
+                            <td className="py-2 px-3 text-zinc-400">All</td>
+                            <td className="py-2 px-3 font-sans text-xs">Active presentation mode: 'nav' (interactive navbar), 'text' (draggable typography), 'player' (audio player), 'empty' (custom children).</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">items</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">NavbarItem[]</td>
+                            <td className="py-2 px-3 text-zinc-400">Default 4 tabs</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="nav"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Array of tab objects: &#123; id, label, icon: LucideIcon, badge?: boolean &#125;.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">activeIndex</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">number</td>
+                            <td className="py-2 px-3 text-zinc-400">1</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="nav"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Controlled active tab index. The liquid meniscus lens smoothly glides and snaps to this index.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">onChange</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">(index, item) =&gt; void</td>
+                            <td className="py-2 px-3 text-zinc-400">undefined</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="nav"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Callback invoked whenever user clicks or drags the liquid lens to a new tab.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">accentColor</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">"#22d3ee"</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="nav"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Color for notification badge and active glow accents.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">text</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">"LIQUID GLASS"</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="text"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Custom editorial typography string rendered inside the draggable elastic capsule.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">audioTitle</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">"Cupertino Waves"</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="player"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Primary track title string for audio player mode.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">audioArtist</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">"MR PROG • Lossless 48kHz"</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="player"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Secondary track artist and quality metadata string.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">isPlaying</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">boolean</td>
+                            <td className="py-2 px-3 text-zinc-400">true</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="player"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Playback state controlling play/pause icons and pulsating equalizer bars.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">backdrop</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">RefObject</td>
+                            <td className="py-2 px-3 text-zinc-400">null</td>
+                            <td className="py-2 px-3 text-zinc-400">All</td>
+                            <td className="py-2 px-3 font-sans text-xs">Optional React Ref to an underlying canvas or element for real-time hardware Snell ray-tracing.</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">wallpaper</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">string</td>
+                            <td className="py-2 px-3 text-zinc-400">'cross'</td>
+                            <td className="py-2 px-3 text-zinc-400">All</td>
+                            <td className="py-2 px-3 font-sans text-xs">Built-in optical test pattern ('cross' = Bold Blue Cross from flagship demo, 'stripes', 'none' = transparent).</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 text-cyan-300 font-bold">children</td>
+                            <td className="py-2 px-3 text-zinc-400 font-mono">ReactNode</td>
+                            <td className="py-2 px-3 text-zinc-400">undefined</td>
+                            <td className="py-2 px-3 text-zinc-400">mode="empty"</td>
+                            <td className="py-2 px-3 font-sans text-xs">Arbitrary React children wrapped inside the optical liquid glass container.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                 </div>
+
+                {/* 3. Copyable Full TypeScript Props Code Snippet */}
+                <div className="p-3 rounded-xl bg-black/60 border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-300 font-bold text-[11px] flex items-center gap-1.5">
+                      <Code2 size={13} className="text-cyan-400" />
+                      Complete TypeScript Usage Snippet:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const snippet = `<LiquidGlass
+  mode="nav"
+  refraction={${config.refraction.toFixed(3)}}
+  bevel={${config.bevel}}
+  dispersion={${config.dispersion.toFixed(3)}}
+  blur={${config.blur}}
+  darkTint={${(config.darkTint ?? 0.15).toFixed(2)}}
+  tintColor="${tintColor}"
+  thickness={${config.thickness ?? 475}}
+  viscosity={${(config.viscosity ?? 0.58).toFixed(2)}}
+  shadowStep={${config.shadowStep ?? 5}}
+  shadowTone="${shadowTone}"
+  isShadowInverted={${isShadowInverted}}
+  borderOpacity={${(config.borderOpacity ?? 0.18).toFixed(2)}}
+  radius={${config.radius >= 999 ? 9999 : config.radius}}
+/>`;
+                        navigator.clipboard.writeText(snippet);
+                        setCopiedAction('copy-props-snippet');
+                        setTimeout(() => setCopiedAction(null), 2000);
+                      }}
+                      className="px-2.5 py-1 rounded-md bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[10px] border border-cyan-400/40 flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedAction === 'copy-props-snippet' ? 'Copied Snippet!' : 'Copy Configured Snippet'}
+                    </button>
+                  </div>
+                  <pre className="p-2.5 rounded-lg bg-[#04060b] border border-white/5 text-[11px] text-cyan-300 overflow-x-auto select-all leading-relaxed font-mono">
+{`<LiquidGlass
+  mode="nav"
+  refraction={${config.refraction.toFixed(3)}}
+  bevel={${config.bevel}}
+  dispersion={${config.dispersion.toFixed(3)}}
+  blur={${config.blur}}
+  darkTint={${(config.darkTint ?? 0.15).toFixed(2)}}
+  tintColor="${tintColor}"
+  thickness={${config.thickness ?? 475}}
+  viscosity={${(config.viscosity ?? 0.58).toFixed(2)}}
+  shadowStep={${config.shadowStep ?? 5}}
+  shadowTone="${shadowTone}"
+  isShadowInverted={${isShadowInverted}}
+  borderOpacity={${(config.borderOpacity ?? 0.18).toFixed(2)}}
+  radius={${config.radius >= 999 ? 9999 : config.radius}}
+/>`}
+                  </pre>
+                </div>
+
               </div>
             )}
 

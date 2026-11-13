@@ -1,4 +1,4 @@
-import { LiquidGlassConfig, ShadowTone, computeGlassBoxShadow, computeInvertedGlassAura } from '../types';
+import { LiquidGlassConfig, ShadowTone, computeGlassBoxShadow, computeInvertedGlassAura } from '../types/index';
 
 export interface SeparatedExportCode {
   html: string;
@@ -471,6 +471,11 @@ function createSnellRenderer(canvas, opt) {
       return sqrt(sqrt(max(0.0, 1.0 - r * r * r * r)));
     }
 
+    float getBoxSdf(vec2 pt, vec2 halfExt, float r) {
+      vec2 d = abs(pt) - halfExt + r;
+      return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;
+    }
+
     void main() {
       float rad = uRect.w * 0.5;
       vec2 halfExtent = (uRect.zw * 0.5) / rad;
@@ -478,8 +483,7 @@ function createSnellRenderer(canvas, opt) {
       float rc = min(uRadius / rad, min(halfExtent.x, halfExtent.y));
 
       // Signed distance function of squircle box in units of rad
-      vec2 q = abs(p) - halfExtent + rc;
-      float sdf = min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - rc;
+      float sdf = getBoxSdf(p, halfExtent, rc);
 
       float pixel = 1.0 / rad;
       float coverage = clamp(0.5 - sdf / pixel, 0.0, 1.0);
@@ -493,13 +497,11 @@ function createSnellRenderer(canvas, opt) {
         return;
       }
 
-      // Analytical gradient
+      // Analytical central-difference gradient
       vec2 e = vec2(pixel * 0.75, 0.0);
       vec2 grad = vec2(
-        (min(max(abs(p + e.xy) - halfExtent + rc, 0.0).x, max(abs(p + e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(p + e.xy) - halfExtent + rc, 0.0)) - rc) -
-        (min(max(abs(p - e.xy) - halfExtent + rc, 0.0).x, max(abs(p - e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(p - e.xy) - halfExtent + rc, 0.0)) - rc),
-        (min(max(abs(p + e.yx) - halfExtent + rc, 0.0).x, max(abs(p + e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(p + e.yx) - halfExtent + rc, 0.0)) - rc) -
-        (min(max(abs(p - e.yx) - halfExtent + rc, 0.0).x, max(abs(p - e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(p - e.yx) - halfExtent + rc, 0.0)) - rc)
+        getBoxSdf(p + e.xy, halfExtent, rc) - getBoxSdf(p - e.xy, halfExtent, rc),
+        getBoxSdf(p + e.yx, halfExtent, rc) - getBoxSdf(p - e.yx, halfExtent, rc)
       );
       grad /= max(length(grad), 1e-5);
 
@@ -522,11 +524,10 @@ function createSnellRenderer(canvas, opt) {
         vec3 ray = refract(view, frontNormal, 1.0 / eta);
         float nearT = 0.0;
         float farT = (lift + 1.0) / max(-ray.z, 0.05);
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 10; i++) {
           float midT = 0.5 * (nearT + farT);
           vec3 x = frontPoint + ray * midT;
-          vec2 qX = abs(x.xy) - halfExtent + rc;
-          float sdBack = min(max(qX.x, qX.y), 0.0) + length(max(qX, 0.0)) - rc;
+          float sdBack = getBoxSdf(x.xy, halfExtent, rc);
           float backLift = bevelW * squircleProfile(clamp(-sdBack / bevelW, 0.0, 1.0));
           if (x.z > -backLift && sdBack < 0.0) nearT = midT; else farT = midT;
         }
@@ -534,15 +535,12 @@ function createSnellRenderer(canvas, opt) {
         exitXY = xExit.xy;
         exitZ = xExit.z;
 
-        vec2 qExit = abs(xExit.xy) - halfExtent + rc;
         vec2 exitGrad = vec2(
-          (min(max(abs(xExit.xy + e.xy) - halfExtent + rc, 0.0).x, max(abs(xExit.xy + e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy + e.xy) - halfExtent + rc, 0.0)) - rc) -
-          (min(max(abs(xExit.xy - e.xy) - halfExtent + rc, 0.0).x, max(abs(xExit.xy - e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy - e.xy) - halfExtent + rc, 0.0)) - rc),
-          (min(max(abs(xExit.xy + e.yx) - halfExtent + rc, 0.0).x, max(abs(xExit.xy + e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy + e.yx) - halfExtent + rc, 0.0)) - rc) -
-          (min(max(abs(xExit.xy - e.yx) - halfExtent + rc, 0.0).x, max(abs(xExit.xy - e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy - e.yx) - halfExtent + rc, 0.0)) - rc)
+          getBoxSdf(xExit.xy + e.xy, halfExtent, rc) - getBoxSdf(xExit.xy - e.xy, halfExtent, rc),
+          getBoxSdf(xExit.xy + e.yx, halfExtent, rc) - getBoxSdf(xExit.xy - e.yx, halfExtent, rc)
         );
         exitGrad /= max(length(exitGrad), 1e-5);
-        float exitInset = clamp(-(min(max(qExit.x, qExit.y), 0.0) + length(max(qExit, 0.0)) - rc) / bevelW, 0.0, 1.0);
+        float exitInset = clamp(-getBoxSdf(xExit.xy, halfExtent, rc) / bevelW, 0.0, 1.0);
         float exitSlope = (squircleProfile(exitInset + delta) - squircleProfile(max(exitInset - delta, 0.0))) / 0.004;
         vec3 exitNormal = normalize(vec3(exitGrad * exitSlope, -1.0));
         outward = refract(ray, -exitNormal, eta);
@@ -553,19 +551,13 @@ function createSnellRenderer(canvas, opt) {
       vec2 target = exitXY + outward.xy * projT;
       vec2 shift = target - p;
 
-      float coreFade = 1.0 - smoothstep(0.65, 0.98, inset);
-      float rimEntry = smoothstep(0.0, 0.08, inset);
-      float bevelTransition = rimEntry * coreFade;
+      float bevelTransition = 1.0 - smoothstep(0.82, 1.0, inset);
       shift *= bevelTransition;
-      float shiftMagnitude = length(shift);
-      if (shiftMagnitude > 0.16) {
-        shift = (shift / shiftMagnitude) * 0.16;
-      }
       target = p + shift;
 
-      vec2 originUv = vec2(uRect.x + uRect.z * 0.5, uScreenSize.y - (uRect.y + uRect.w * 0.5)) / uScreenSize;
+      vec2 originUv = vec2(uRect.x + uRect.z * 0.5, uRect.y + uRect.w * 0.5) / uScreenSize;
       vec2 scaleUv = vec2(rad) / uScreenSize;
-      vec2 uvG = originUv + target * scaleUv;
+      vec2 uvG = originUv + vec2(target.x, -target.y) * scaleUv;
 
       float split = 0.75 * uDispersion;
       float shiftLen = length(shift);
@@ -576,8 +568,8 @@ function createSnellRenderer(canvas, opt) {
         float dispOffset = split * (shiftLen * 0.75 + 0.015 * bevelTransition);
         vec2 targetR = p + shift - shiftDir * dispOffset;
         vec2 targetB = p + shift + shiftDir * dispOffset;
-        uvR = originUv + targetR * scaleUv;
-        uvB = originUv + targetB * scaleUv;
+        uvR = originUv + vec2(targetR.x, -targetR.y) * scaleUv;
+        uvB = originUv + vec2(targetB.x, -targetB.y) * scaleUv;
       }
 
       vec3 color = vec3(
@@ -586,18 +578,24 @@ function createSnellRenderer(canvas, opt) {
         texture(uBackdrop, clamp(uvB, 0.0, 1.0)).b
       );
 
-      if (uBlur > 0.05) {
-        vec2 bStep = vec2(uBlur * 0.35 + 0.3) / uScreenSize;
-        vec3 blurred = color * 0.36;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(bStep.x, 0.0), 0.0, 1.0)).rgb * 0.16;
-        blurred += texture(uBackdrop, clamp(uvG - vec2(bStep.x, 0.0), 0.0, 1.0)).rgb * 0.16;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(0.0, bStep.y), 0.0, 1.0)).rgb * 0.16;
-        blurred += texture(uBackdrop, clamp(uvG - vec2(0.0, bStep.y), 0.0, 1.0)).rgb * 0.16;
-        color = blurred;
+      if (uBlur > 0.01) {
+        float r = clamp(uBlur * 0.0014, 0.0004, 0.0075);
+        vec3 acc = color * 0.28;
+        float r1 = r * 0.45;
+        acc += texture(uBackdrop, clamp(uvG + vec2(r1, 0.0), 0.0, 1.0)).rgb * 0.12;
+        acc += texture(uBackdrop, clamp(uvG - vec2(r1, 0.0), 0.0, 1.0)).rgb * 0.12;
+        acc += texture(uBackdrop, clamp(uvG + vec2(0.0, r1), 0.0, 1.0)).rgb * 0.12;
+        acc += texture(uBackdrop, clamp(uvG - vec2(0.0, r1), 0.0, 1.0)).rgb * 0.12;
+        float r2 = r * 0.85;
+        acc += texture(uBackdrop, clamp(uvG + vec2(r2 * 0.707, r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
+        acc += texture(uBackdrop, clamp(uvG + vec2(-r2 * 0.707, r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
+        acc += texture(uBackdrop, clamp(uvG + vec2(r2 * 0.707, -r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
+        acc += texture(uBackdrop, clamp(uvG + vec2(-r2 * 0.707, -r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
+        color = acc;
       }
 
       float cosI = max(frontNormal.z, 0.0);
-      float topGlaze = pow(max(grad.y - 0.2, 0.0), 2.2) * pow(1.0 - cosI, 2.0) * 0.15 * uReflectivity;
+      float topGlaze = pow(max(grad.y - 0.3, 0.0), 2.2) * pow(1.0 - cosI, 2.0) * 0.12 * uReflectivity;
       color += vec3(1.0) * topGlaze;
 
       if (uDarkTint > 0.001) {

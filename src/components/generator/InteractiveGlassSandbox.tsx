@@ -69,13 +69,16 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
   const [copiedAction, setCopiedAction] = useState<string | null>(null);
 
   // Custom Image Upload and Inner Content States
+  const urlMode = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('mode') as ('text' | 'nav' | 'player') : null;
+  const isShowcase = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('showcase') === 'true';
+  const isClean = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('clean') === 'true';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const customImageElementRef = useRef<HTMLImageElement | null>(null);
-  const [innerContentMode, setInnerContentMode] = useState<'text' | 'nav' | 'player'>('nav');
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [innerContentMode, setInnerContentMode] = useState<'text' | 'nav' | 'player'>(urlMode || 'nav');
+  const [isPlayingAudio, setIsPlayingAudio] = useState(urlMode === 'player' || true);
   const [shadowTone, setShadowTone] = useState<ShadowTone>('dark');
   const [isShadowInverted, setIsShadowInverted] = useState(false);
-  const [activeNavTab, setActiveNavTab] = useState(0);
+  const [activeNavTab, setActiveNavTab] = useState(1);
   const [panelTensionX, setPanelTensionX] = useState(0);
 
   // New Smart Color, 3D and Asymmetric Border/Radius States
@@ -85,6 +88,14 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
   const [bottomRadiusStep, setBottomRadiusStep] = useState<number>(config.bottomRadiusStep ?? config.radiusStep ?? 10);
   const [borderPreset, setBorderPreset] = useState<'white' | 'prism' | 'cyan' | 'gold' | 'chrome' | 'custom'>('white');
   const [customBorderColor, setCustomBorderColor] = useState<string>('#ffffff');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (config.widthStep > 3) {
+        onChangeSteps({ widthStep: 2, heightStep: 1 });
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof config.topRadiusStep === 'number') {
@@ -472,18 +483,20 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
         });
       };
 
+      const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 640;
+
       const engine = createSolidEngine(
         canvas,
         {
           ...shapeDefaults,
           background: '#040509',
-          count: 24,
-          size: 46,
-          spawnRate: 14,
+          count: isMobileScreen ? 8 : 24,
+          size: isMobileScreen ? 32 : 46,
+          spawnRate: isMobileScreen ? 3 : 14,
           appearanceDuration: 0.5,
           restitution: 0.45,
           friction: 0.4,
-          followCursor: true,
+          followCursor: !isMobileScreen,
           interactive: true,
         },
         undefined,
@@ -737,6 +750,354 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
     setCopiedAction('copy-react');
     setTimeout(() => setCopiedAction(null), 2500);
   };
+
+  const renderCapsuleBody = (mode: 'text' | 'nav' | 'player', activeTab = 1, isPlaying = true) => {
+    const isNav = mode === 'nav';
+    const isPlayer = mode === 'player';
+    const capH = isNav ? 84 : isPlayer ? 80 : 76;
+    const capW = isNav ? 540 : isPlayer ? 540 : 500;
+    const maxCapRad = Math.round(capH / 2);
+
+    return (
+      <div
+        className="flex items-center justify-center relative pointer-events-auto"
+        style={{
+          height: `${capH}px`,
+          width: `${capW}px`,
+          maxWidth: '92vw',
+          borderRadius: `${maxCapRad}px`,
+          backgroundColor: darkTintRgba,
+          boxShadow: computeGlassBoxShadow(config.shadowStep, shadowTone, config.borderOpacity, config.thicknessStep, isShadowInverted),
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* The Real WebGL Physical Snell Refraction Layer */}
+        <SoapBubbleSurface
+          backdrop={canvasRef}
+          interactive={false}
+          wobble={0}
+          tilt={0}
+          radius={maxCapRad}
+          topRadius={maxCapRad}
+          bottomRadius={maxCapRad}
+          glass={config.glass}
+          refraction={(config.thicknessStep >= 9 ? config.refraction * 2.85 : config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75))}
+          bevel={Math.round((config.thicknessStep >= 9 ? config.bevel * 2.3 : config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55)))}
+          dispersion={config.dispersion}
+          blur={config.blur}
+          clearCenter={config.clearCenter}
+          paused={false}
+          speed={0}
+          oilCoverage={0}
+          oilOpacity={0}
+          iridescence={0}
+          glintIntensity={0}
+          reflectivity={0.0}
+          thickness={config.thickness}
+          windowLight={false}
+          windowIntensity={0}
+          floorLight={0}
+          bottomShade={false}
+          keyLight={false}
+          tint={darkTintRgba}
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+          style={{
+            borderRadius: `${maxCapRad}px`,
+            backgroundColor: darkTintRgba,
+            border: (config.borderStep === 0 || config.borderOpacity <= 0) ? 'none' : (borderGradient ? 'none' : `1px solid ${borderColorRgba}`),
+            backdropFilter: `blur(${config.blur}px)`,
+            WebkitBackdropFilter: `blur(${config.blur}px)`,
+          }}
+        />
+
+        {/* Gradient border overlay with CSS mask-composite for curved glass */}
+        {borderGradient && config.borderStep > 0 && config.borderOpacity > 0 && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-[inherit]"
+            style={{
+              borderRadius: `${maxCapRad}px`,
+              padding: '1px',
+              background: borderGradient,
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude',
+              opacity: Math.min(1.0, (config.borderStep / 10) * 0.95),
+              zIndex: 3,
+            }}
+          />
+        )}
+
+        {/* Inverted Curvature Light / Shadow Aura Layer */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none rounded-[inherit]"
+          style={{
+            borderRadius: `${maxCapRad}px`,
+            boxShadow: isShadowInverted ? computeInvertedGlassAura(config.shadowStep, shadowTone, config.borderOpacity) : 'none',
+            opacity: isShadowInverted ? 1 : 0,
+            zIndex: 4,
+          }}
+        />
+
+        {/* Interactive Inner Content Layer */}
+        <div className={`relative z-10 flex items-center justify-center w-full h-full select-none ${isNav ? 'overflow-visible px-1' : 'overflow-hidden px-4'} rounded-[inherit]`}>
+          {mode === 'text' && (
+            <div className="flex items-center justify-center w-full h-full cursor-grab select-none">
+              <span className="font-mono text-sm md:text-base font-bold tracking-[0.28em] text-zinc-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] uppercase truncate max-w-full">
+                LIQUID GLASS
+              </span>
+            </div>
+          )}
+
+          {mode === 'nav' && (
+            <div className="relative flex items-center justify-center w-full h-full pointer-events-auto">
+              <LiquidGlassNavbar
+                activeIndex={activeTab}
+                backdropRef={canvasRef}
+                darkTint={config.darkTint}
+                darkTintStep={config.darkTintStep}
+                refraction={config.refraction * (0.70 + (config.thicknessStep / 10) * 0.75)}
+                bevel={Math.round(config.bevel * (0.75 + (config.thicknessStep / 10) * 0.55))}
+                viscosity={config.viscosity}
+                viscosityStep={config.viscosityStep}
+                thickness={config.thickness}
+                thicknessStep={config.thicknessStep}
+                shadowStep={config.shadowStep}
+                shadowTone={shadowTone}
+                borderOpacity={config.borderOpacity}
+                blur={config.blur}
+                height={capH}
+                maxWidth={capW}
+              />
+            </div>
+          )}
+
+          {mode === 'player' && (
+            <div 
+              className="flex items-center justify-between w-full h-full text-zinc-200 pointer-events-auto select-none"
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxSizing: 'border-box',
+                padding: '0 clamp(16px, 3vw, 24px)',
+              }}
+            >
+              {/* Left: Track Info with Dynamic Equalizer Bars */}
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'clamp(12px, 2vw, 16px)',
+                  minWidth: 0,
+                  flex: '1 1 auto',
+                }}
+              >
+                {/* Glowing Frosted Music Disc */}
+                <div 
+                  style={{
+                    width: 'clamp(42px, 5.2vw, 48px)',
+                    height: 'clamp(42px, 5.2vw, 48px)',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35))',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: isPlaying ? '0 0 16px rgba(6, 182, 212, 0.45)' : 'none',
+                    transition: 'box-shadow 300ms ease',
+                  }}
+                >
+                  {/* Dynamic 3-Bar Equalizer Waveform */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '16px' }}>
+                    <span 
+                      style={{
+                        width: '3.5px',
+                        height: isPlaying ? '16px' : '6px',
+                        borderRadius: '2px',
+                        backgroundColor: '#22d3ee',
+                        animation: isPlaying ? 'pulse 800ms ease-in-out infinite alternate' : 'none',
+                        transition: 'height 200ms ease',
+                      }} 
+                    />
+                    <span 
+                      style={{
+                        width: '3.5px',
+                        height: isPlaying ? '11px' : '12px',
+                        borderRadius: '2px',
+                        backgroundColor: '#38bdf8',
+                        animation: isPlaying ? 'pulse 600ms ease-in-out infinite alternate 150ms' : 'none',
+                        transition: 'height 200ms ease',
+                      }} 
+                    />
+                    <span 
+                      style={{
+                        width: '3.5px',
+                        height: isPlaying ? '14px' : '8px',
+                        borderRadius: '2px',
+                        backgroundColor: '#818cf8',
+                        animation: isPlaying ? 'pulse 900ms ease-in-out infinite alternate 300ms' : 'none',
+                        transition: 'height 200ms ease',
+                      }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Track Titles */}
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+                  <span 
+                    style={{
+                      fontSize: 'clamp(15px, 2vw, 17px)',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      color: '#ffffff',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+                    }}
+                  >
+                    Cupertino Waves
+                  </span>
+                  <span 
+                    style={{
+                      fontSize: 'clamp(11px, 1.3vw, 13px)',
+                      fontFamily: 'monospace',
+                      color: 'rgba(212, 212, 216, 0.75)',
+                      letterSpacing: '0.06em',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    MR PROG • Lossless 48kHz
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: Frosted Audio Controls */}
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'clamp(8px, 1.5vw, 12px)',
+                  flexShrink: 0,
+                }}
+              >
+                <button
+                  type="button"
+                  title="Previous Track"
+                  style={{
+                    width: 'clamp(34px, 4.4vw, 40px)',
+                    height: 'clamp(34px, 4.4vw, 40px)',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#e4e4e7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 180ms ease',
+                  }}
+                >
+                  <SkipBack size={16} strokeWidth={2.4} />
+                </button>
+
+                <button
+                  type="button"
+                  title="Pause"
+                  style={{
+                    width: 'clamp(42px, 5.4vw, 48px)',
+                    height: 'clamp(42px, 5.4vw, 48px)',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.22)',
+                    border: '1px solid rgba(255, 255, 255, 0.40)',
+                    boxShadow: '0 0 14px rgba(255, 255, 255, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.80)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 180ms cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  <Pause size={18} fill="currentColor" />
+                </button>
+
+                <button
+                  type="button"
+                  title="Next Track"
+                  style={{
+                    width: 'clamp(34px, 4.4vw, 40px)',
+                    height: 'clamp(34px, 4.4vw, 40px)',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#e4e4e7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 180ms ease',
+                  }}
+                >
+                  <SkipForward size={16} strokeWidth={2.4} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  if (isShowcase) {
+    return (
+      <div 
+        id="interactive-glass-sandbox"
+        ref={containerRef}
+        className="fixed inset-0 w-screen h-screen bg-[#05060a] overflow-hidden select-none flex items-center justify-center p-8"
+      >
+        {/* Native Backdrop Canvas: Direct GPU texture feed */}
+        <canvas
+          ref={canvasRef}
+          className="fixed inset-0 w-full h-full pointer-events-none"
+        />
+
+        {/* Triple Authentic Live Stage Capsules Stacked with 10% Padding */}
+        <div id="showcase-content" className="relative z-20 flex flex-col items-center justify-center gap-7 pointer-events-auto">
+          {renderCapsuleBody('text')}
+          {renderCapsuleBody('nav', 1)}
+          {renderCapsuleBody('player', 0, true)}
+        </div>
+      </div>
+    );
+  }
+
+  if (isClean) {
+    return (
+      <div 
+        id="interactive-glass-sandbox"
+        ref={containerRef}
+        className="fixed inset-0 w-screen h-screen bg-[#05060a] overflow-hidden select-none flex items-center justify-center p-6"
+      >
+        {/* Native Backdrop Canvas: Direct GPU texture feed */}
+        <canvas
+          ref={canvasRef}
+          className="fixed inset-0 w-full h-full pointer-events-none"
+        />
+
+        {/* Single Authentic Live Stage Capsule */}
+        <div className="relative z-20 flex items-center justify-center">
+          {renderCapsuleBody(innerContentMode, activeNavTab, isPlayingAudio)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="w-full max-w-4xl mx-auto px-3 sm:px-6 my-3">

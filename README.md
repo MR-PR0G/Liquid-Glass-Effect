@@ -9,21 +9,35 @@ No more cloudy, flat `backdrop-filter: blur()` plastic.
 
 <br />
 
-[![npm version](https://img.shields.io/npm/v/@mr-prog/liquid-glass?style=for-the-badge&color=0284c7&labelColor=09090b)](https://www.npmjs.com/package/@mr-prog/liquid-glass)
-[![License: MIT](https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=09090b)](https://opensource.org/licenses/MIT)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Online-0284c7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
+[![npm version](https://img.shields.io/npm/v/@mr-prog/liquid-glass?style=for-the-badge&color=2563eb&labelColor=09090b)](https://www.npmjs.com/package/@mr-prog/liquid-glass)
 [![Instant Render](https://img.shields.io/badge/Render%20Time-%3C0.8ms%20Instant-06b6d4?style=for-the-badge&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
 [![120 FPS](https://img.shields.io/badge/Performance-120%20FPS-059669?style=for-the-badge&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
-[![Live Studio](https://img.shields.io/badge/Live%20Demo-Interactive%20Studio-8b5cf6?style=for-the-badge&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=09090b)](https://opensource.org/licenses/MIT)
 
 <br />
 
 <p align="center">
-  <img src="demo/preview.png" alt="Liquid Glass Optical Effect Preview" width="100%" style="max-width: 900px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);" />
+  <a href="https://mr-pr0g.github.io/LiquidGlass/">
+    <img src="demo/preview.png" alt="Liquid Glass Optical Effect Preview" width="100%" style="max-width: 900px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);" />
+  </a>
 </p>
 
 <br />
 
-**[🚀 Try Live Interactive Studio](https://mr-pr0g.github.io/LiquidGlass/)** &bull; **[📦 NPM Package](https://www.npmjs.com/package/@mr-prog/liquid-glass)**
+<p align="center">
+  <a href="https://mr-pr0g.github.io/LiquidGlass/">
+    <img src="https://img.shields.io/badge/🚀%20OPEN%20LIVE%20DEMO-Test%20in%20Browser-0284c7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0c14" height="46" alt="Open Live Demo" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://www.npmjs.com/package/@mr-prog/liquid-glass">
+    <img src="https://img.shields.io/badge/📦%20NPM%20PACKAGE-Install%20Now-2563eb?style=for-the-badge&logo=npm&logoColor=white&labelColor=0a0c14" height="46" alt="NPM Package" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://mr-pr0g.github.io/LiquidGlass/"><strong>👉 Click here to test live liquid refraction, audio player & navigation bar in your browser 👈</strong></a>
+</p>
 
 </div>
 

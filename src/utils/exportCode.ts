@@ -18,8 +18,8 @@ export function generateSeparatedExportCode(
   innerContentMode: 'text' | 'nav' | 'player' = 'nav',
   isShadowInverted: boolean = false
 ): SeparatedExportCode {
-  const darkTintVal = (config.darkTint ?? 0.20).toFixed(3);
-  const hVal = config.height ?? 56;
+  const darkTintVal = (config.darkTint ?? 0.15).toFixed(3);
+  const hVal = config.height ?? 92;
   const maxCapRad = Math.max(1, Math.round(hVal / 2));
   const topRadiusVal = typeof config.topRadius === 'number' ? config.topRadius : maxCapRad;
   const botRadiusVal = typeof config.bottomRadius === 'number' ? config.bottomRadius : maxCapRad;
@@ -42,9 +42,9 @@ export function generateSeparatedExportCode(
     ? config.bevel * 2.3
     : config.bevel * (0.75 + ((config.thicknessStep ?? 5) / 10) * 0.55)
   );
-  const dispersionVal = (config.dispersion ?? 0.25).toFixed(4);
+  const dispersionVal = (config.dispersion ?? 0.28).toFixed(4);
   const blurVal = (config.blur ?? 0).toFixed(1);
-  const borderOpacityVal = (config.borderOpacity ?? 0.12).toFixed(3);
+  const borderOpacityVal = (config.borderOpacity ?? 0.18).toFixed(3);
   const shadowStepVal = config.shadowStep ?? 5;
   const thicknessStepVal = config.thicknessStep ?? 5;
   const boxShadowCss = computeGlassBoxShadow(shadowStepVal, shadowTone, config.borderOpacity, thicknessStepVal, isShadowInverted);
@@ -59,31 +59,44 @@ export function generateSeparatedExportCode(
   // -------------------------------------------------------------
   let innerHtml = '';
   if (innerContentMode === 'nav') {
-    innerHtml = `    <!-- Liquid Glass Responsive Navigation Bar -->
+    innerHtml = `    <!-- Liquid Glass Responsive Navigation Bar with Draggable Physical Lens -->
     <nav class="liquid-glass-nav" aria-label="Tab Navigation">
-      <button class="nav-tab active" data-index="0" aria-label="Home">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-      </button>
-      <button class="nav-tab" data-index="1" aria-label="Search">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-        </svg>
-      </button>
-      <button class="nav-tab" data-index="2" aria-label="Explore">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-        </svg>
-      </button>
-      <button class="nav-tab" data-index="3" aria-label="Alerts">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-        </svg>
-      </button>
+      <!-- 1. Base Track Icons (Stable resting layer) -->
+      <div class="nav-base-track">
+        <button class="nav-tab active" data-index="0" aria-label="Home">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </button>
+        <button class="nav-tab" data-index="1" aria-label="Search">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+        </button>
+        <button class="nav-tab" data-index="2" aria-label="Explore">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+          </svg>
+        </button>
+        <button class="nav-tab" data-index="3" aria-label="Alerts">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+          </svg>
+          <span class="nav-badge"></span>
+        </button>
+      </div>
 
-      <!-- Active Liquid Meniscus Lens Indicator -->
-      <div id="liquid-nav-lens" class="liquid-nav-lens"></div>
+      <!-- 2. Draggable Liquid Meniscus Lens with Dedicated WebGL Snell Refraction & 3D Optics -->
+      <div id="liquid-nav-lens" class="liquid-nav-lens">
+        <!-- Physical Snell Ray-Tracing Layer for the Active Lens -->
+        <canvas id="liquid-lens-canvas" class="liquid-lens-canvas"></canvas>
+        <!-- Dark Tint Absorption Layer -->
+        <div class="liquid-lens-tint"></div>
+        <!-- 3D Refracted Optical Content Layer (Icons with Meniscus Curvature) -->
+        <div id="liquid-lens-refracted" class="liquid-lens-refracted"></div>
+        <!-- Natural Inner Specular Rim Highlight -->
+        <div class="liquid-lens-specular"></div>
+      </div>
     </nav>`;
   } else if (innerContentMode === 'player') {
     innerHtml = `    <!-- Liquid Glass Luxury Cupertino Audio Player -->
@@ -123,11 +136,11 @@ export function generateSeparatedExportCode(
 <!-- Paste this element wherever you want the liquid glass widget -->
 <!-- ============================================================ -->
 <div id="liquid-glass-capsule" class="liquid-glass-capsule">
-  <!-- Hardware-Accelerated Snell Ray-Tracing WebGL Canvas -->
+  <!-- Hardware-Accelerated Snell Ray-Tracing WebGL Canvas for the Track -->
   <canvas id="liquid-glass-canvas" class="liquid-glass-canvas"></canvas>
 ${isShadowInverted ? `  <!-- Inverted Curvature Light / Shadow Aura Layer -->
   <div class="liquid-glass-aura"></div>\n` : ''}
-  <!-- Interactive Content Layer (Flat Core) -->
+  <!-- Interactive Content Layer -->
   <div class="liquid-glass-content">
 ${innerHtml}
   </div>
@@ -162,7 +175,7 @@ ${innerHtml}
   box-sizing: border-box;
 }
 
-/* WebGL Snell Refraction Layer */
+/* WebGL Snell Refraction Layer for Parent Track */
 .liquid-glass-canvas {
   position: absolute;
   inset: 0;
@@ -185,7 +198,7 @@ ${isShadowInverted ? `
 }
 ` : ''}
 
-/* Inner Flat Core Content Layer */
+/* Inner Content Layer */
 .liquid-glass-content {
   position: relative;
   z-index: 10;
@@ -195,71 +208,163 @@ ${isShadowInverted ? `
   align-items: center;
   justify-content: center;
   border-radius: inherit;
-  padding: 0 10px;
   box-sizing: border-box;
 }
 
-/* Navigation Bar Tabs */
+/* ------------------------------------------------------------- */
+/* Navigation Bar Track & Tabs                                   */
+/* ------------------------------------------------------------- */
 .liquid-glass-nav {
   position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.nav-base-track {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: space-around;
   width: 100%;
   height: 100%;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .nav-tab {
   position: relative;
-  z-index: 2;
   background: transparent;
   border: none;
-  padding: 8px 16px;
+  width: 25%;
+  height: 100%;
   color: #a1a1aa;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 240ms ease, transform 240ms ease;
+  transition: color 240ms ease, opacity 180ms ease, transform 180ms ease;
   outline: none;
+  pointer-events: auto;
 }
 
 .nav-tab:hover {
   color: #f4f4f5;
-  transform: scale(1.06);
-}
-
-.nav-tab.active {
-  color: #38bdf8;
-  opacity: 1;
 }
 
 .nav-icon {
-  width: 22px;
-  height: 22px;
-  filter: drop-shadow(0 0 6px currentColor);
+  width: 24px;
+  height: 24px;
+  transition: transform 220ms ease;
 }
 
-.nav-tab.active .nav-icon {
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.98)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+.nav-badge {
+  position: absolute;
+  top: 30%;
+  right: calc(50% - 16px);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #22d3ee;
+  box-shadow: 0 0 8px #00e5ff;
 }
 
-/* Active Fluid Meniscus Lens Indicator (Min 1, always exactly +1 step darker than parent back glass) */
+/* ------------------------------------------------------------- */
+/* Active Draggable Liquid Lens (Physical Snell Refraction)      */
+/* ------------------------------------------------------------- */
 .liquid-nav-lens {
   position: absolute;
   top: 50%;
-  height: calc(100% - 10px);
-  transform: translateY(-50%);
+  left: 12.5%;
+  width: 128px;
+  height: calc(100% - 16px);
+  transform: translate3d(-50%, -50%, 0);
   border-radius: 9999px;
-  background: rgba(8, 12, 20, ${lensDarkTintVal});
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1.2px 1.8px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40), 0 4px 14px -1px rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-  z-index: 1;
-  transition: left 380ms cubic-bezier(0.22, 1, 0.36, 1), width 380ms cubic-bezier(0.22, 1, 0.36, 1);
+  clip-path: inset(0 round 9999px);
+  -webkit-clip-path: inset(0 round 9999px);
+  isolation: isolate;
+  background-color: rgba(6, 10, 18, ${lensDarkTintVal});
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1.5px 2px rgba(255, 255, 255, 0.70), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), 0 8px 22px rgba(0, 0, 0, 0.55);
+  cursor: grab;
+  z-index: 20;
+  overflow: hidden;
+  box-sizing: border-box;
+  touch-action: none;
+  will-change: transform, left;
+  transition: width 320ms cubic-bezier(0.2, 1, 0.3, 1), height 320ms cubic-bezier(0.2, 1, 0.3, 1);
 }
 
-/* Editorial Typography Mode */
+.liquid-nav-lens:active {
+  cursor: grabbing;
+}
+
+.liquid-lens-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquid-lens-tint {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: rgba(4, 7, 14, ${lensDarkTintVal});
+  pointer-events: none;
+}
+
+.liquid-lens-refracted {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  clip-path: inset(0 round 9999px);
+  -webkit-clip-path: inset(0 round 9999px);
+  isolation: isolate;
+  pointer-events: none;
+  z-index: 35;
+}
+
+.refracted-icon-slot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  transform: translate3d(-50%, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #ffffff;
+}
+
+.refracted-icon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.liquid-lens-specular {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1.2px 1.8px rgba(255, 255, 255, 0.55), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40);
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* ------------------------------------------------------------- */
+/* Editorial Typography Mode                                     */
+/* ------------------------------------------------------------- */
 .liquid-glass-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 15px;
@@ -269,7 +374,9 @@ ${isShadowInverted ? `
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 
-/* Luxury Cupertino Audio Player Mode */
+/* ------------------------------------------------------------- */
+/* Luxury Cupertino Audio Player Mode                            */
+/* ------------------------------------------------------------- */
 .liquid-glass-player {
   display: flex;
   align-items: center;
@@ -313,53 +420,27 @@ ${isShadowInverted ? `
   // 3. JAVASCRIPT & WEBGL ENGINE
   // -------------------------------------------------------------
   const js = `// ============================================================
-// 3. LIQUID GLASS JAVASCRIPT & WEBGL SNELL ENGINE
-// Zero dependencies - 120 FPS hardware-accelerated Snell ray-tracing
+// 3. LIQUID GLASS JAVASCRIPT & DUAL-LENS WEBGL SNELL ENGINE
+// Zero external dependencies - 120 FPS hardware ray-tracing
 // ============================================================
 
 /**
- * Initializes physical Liquid Glass Snell refraction on any element.
- * @param {string|HTMLElement} container - Selector or element of the capsule
- * @param {string|HTMLCanvasElement} canvas - Selector or element of the refraction canvas
- * @param {Object} options - Custom optical parameters
+ * Creates a dedicated WebGL2 Snell refraction renderer for any glass canvas.
  */
-function initLiquidGlass(container, canvas, options = {}) {
-  const host = typeof container === 'string' ? document.querySelector(container) : container;
-  const cvs = typeof canvas === 'string' ? document.querySelector(canvas) : canvas;
-  if (!host || !cvs) {
-    console.warn('LiquidGlass: Invalid container or canvas');
-    return null;
-  }
+function createSnellRenderer(canvas, opt) {
+  const gl = canvas.getContext('webgl2', { alpha: true, antialias: true, premultipliedAlpha: false });
+  if (!gl) return null;
 
-  const config = {
-    refraction: options.refraction ?? ${computedRefraction},
-    bevel: options.bevel ?? ${computedBevel},
-    dispersion: options.dispersion ?? ${dispersionVal},
-    darkTint: options.darkTint ?? ${darkTintVal},
-    blur: options.blur ?? ${blurVal},
-    radius: options.radius ?? ${topRadiusVal},
-    topRadius: options.topRadius ?? ${topRadiusVal},
-    bottomRadius: options.bottomRadius ?? ${botRadiusVal},
-    ...options
-  };
-
-  const gl = cvs.getContext('webgl2', { alpha: true, antialias: true, premultipliedAlpha: false });
-  if (!gl) {
-    console.warn('WebGL2 not supported. CSS fallback active.');
-    return null;
-  }
-
-  // --- GLSL SHADERS ---
-  const vsSource = \`#version 300 es
-    in vec2 aPosition;
+  const vs = \`#version 300 es
+    in vec2 aPos;
     out vec2 vUv;
     void main() {
-      vUv = (aPosition + 1.0) * 0.5;
-      gl_Position = vec4(aPosition, 0.0, 1.0);
+      vUv = (aPos + 1.0) * 0.5;
+      gl_Position = vec4(aPos, 0.0, 1.0);
     }
   \`;
 
-  const fsSource = \`#version 300 es
+  const fs = \`#version 300 es
     precision highp float;
     in vec2 vUv;
     out vec4 fragColor;
@@ -376,7 +457,6 @@ function initLiquidGlass(container, canvas, options = {}) {
     uniform float uDarkTint;
     uniform float uBlur;
 
-    // Exact analytical 2D Rounded Box SDF
     float sdRoundedBox(vec2 p, vec2 b, float r) {
       vec2 q = abs(p) - b + r;
       return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
@@ -394,7 +474,6 @@ function initLiquidGlass(container, canvas, options = {}) {
         return;
       }
 
-      // If no external canvas is attached, keep canvas transparent so CSS liquid glass renders cleanly
       if (!uHasBackdrop) {
         fragColor = vec4(0.0);
         return;
@@ -402,25 +481,20 @@ function initLiquidGlass(container, canvas, options = {}) {
 
       float distInward = -d;
 
-      // Analytical surface normal gradient
       vec2 grad = normalize(vec2(
         sdRoundedBox(p + vec2(1.0, 0.0), halfSize, r) - sdRoundedBox(p - vec2(1.0, 0.0), halfSize, r),
         sdRoundedBox(p + vec2(0.0, 1.0), halfSize, r) - sdRoundedBox(p - vec2(0.0, 1.0), halfSize, r)
       ));
 
-      // Meniscus bevel slope
-      float bevelWidth = clamp(uBevel, 6.0, min(halfSize.y * 0.9, 48.0));
+      float bevelWidth = clamp(uBevel, 4.0, min(halfSize.y * 0.95, 48.0));
       float t = clamp(distInward / bevelWidth, 0.0, 1.0);
       float slope = cos(t * 1.5707963) * (1.0 - t);
 
-      // Snell lateral refraction displacement
-      vec2 refractDisp = -grad * slope * (uRefraction * 36.0);
+      vec2 refractDisp = -grad * slope * (uRefraction * 42.0);
 
-      // Normalized screen backdrop UV coordinates
       vec2 screenUv = (uLensPos + pixelPos) / uScreenSize;
-      screenUv.y = 1.0 - screenUv.y; // Invert for WebGL
+      screenUv.y = 1.0 - screenUv.y;
 
-      // Snell Chromatic Dispersion (separates red & blue spectrums)
       float disp = uDispersion * 0.45;
       vec2 uvR = screenUv + (refractDisp * (1.0 - disp)) / uScreenSize;
       vec2 uvG = screenUv + refractDisp / uScreenSize;
@@ -432,7 +506,6 @@ function initLiquidGlass(container, canvas, options = {}) {
         texture(uBackdrop, clamp(uvB, 0.0, 1.0)).b
       );
 
-      // Gaussian frosted blur
       if (uBlur > 0.1) {
         float bStep = (uBlur * 0.35 + 0.3) * 0.0022;
         vec3 blurred = color * 0.24;
@@ -447,144 +520,324 @@ function initLiquidGlass(container, canvas, options = {}) {
         color = blurred;
       }
 
-      // Dark tint absorption
       color = mix(color, vec3(0.0), uDarkTint);
-
-      // Subpixel edge antialiasing
       float edgeAlpha = clamp(distInward + 0.5, 0.0, 1.0);
       fragColor = vec4(color, edgeAlpha);
     }
   \`;
 
-  function createShader(gl, type, src) {
+  function createShader(gl, type, source) {
     const s = gl.createShader(type);
-    gl.shaderSource(s, src);
+    gl.shaderSource(s, source);
     gl.compileShader(s);
     return s;
   }
 
-  const program = gl.createProgram();
-  gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
-  gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
-  gl.linkProgram(program);
+  const prog = gl.createProgram();
+  gl.attachShader(prog, createShader(gl, gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, createShader(gl, gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
 
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
   const locs = {
-    uBackdrop: gl.getUniformLocation(program, 'uBackdrop'),
-    uHasBackdrop: gl.getUniformLocation(program, 'uHasBackdrop'),
-    uScreenSize: gl.getUniformLocation(program, 'uScreenSize'),
-    uLensPos: gl.getUniformLocation(program, 'uLensPos'),
-    uLensSize: gl.getUniformLocation(program, 'uLensSize'),
-    uRadius: gl.getUniformLocation(program, 'uRadius'),
-    uRefraction: gl.getUniformLocation(program, 'uRefraction'),
-    uBevel: gl.getUniformLocation(program, 'uBevel'),
-    uDispersion: gl.getUniformLocation(program, 'uDispersion'),
-    uDarkTint: gl.getUniformLocation(program, 'uDarkTint'),
-    uBlur: gl.getUniformLocation(program, 'uBlur'),
+    uBackdrop: gl.getUniformLocation(prog, 'uBackdrop'),
+    uHasBackdrop: gl.getUniformLocation(prog, 'uHasBackdrop'),
+    uScreenSize: gl.getUniformLocation(prog, 'uScreenSize'),
+    uLensPos: gl.getUniformLocation(prog, 'uLensPos'),
+    uLensSize: gl.getUniformLocation(prog, 'uLensSize'),
+    uRadius: gl.getUniformLocation(prog, 'uRadius'),
+    uRefraction: gl.getUniformLocation(prog, 'uRefraction'),
+    uBevel: gl.getUniformLocation(prog, 'uBevel'),
+    uDispersion: gl.getUniformLocation(prog, 'uDispersion'),
+    uDarkTint: gl.getUniformLocation(prog, 'uDarkTint'),
+    uBlur: gl.getUniformLocation(prog, 'uBlur'),
   };
 
-  let backdropSource = null;
-  let hasBackdrop = false;
-
-  function setBackdrop(sourceCanvasOrImage) {
-    backdropSource = sourceCanvasOrImage;
-    hasBackdrop = !!sourceCanvasOrImage;
-    updateTexture();
-  }
-
-  function updateTexture() {
-    if (!backdropSource) return;
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, backdropSource);
-  }
-
-  function render() {
-    gl.viewport(0, 0, cvs.width, cvs.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    gl.useProgram(program);
-
-    const rect = host.getBoundingClientRect();
-    gl.uniform1i(locs.uHasBackdrop, hasBackdrop ? 1 : 0);
-    gl.uniform2f(locs.uScreenSize, window.innerWidth, window.innerHeight);
-    gl.uniform2f(locs.uLensPos, rect.left, rect.top);
-    gl.uniform2f(locs.uLensSize, rect.width, rect.height);
-    gl.uniform1f(locs.uRadius, config.radius);
-    gl.uniform1f(locs.uRefraction, config.refraction);
-    gl.uniform1f(locs.uBevel, config.bevel);
-    gl.uniform1f(locs.uDispersion, config.dispersion);
-    gl.uniform1f(locs.uDarkTint, config.darkTint);
-    gl.uniform1f(locs.uBlur, config.blur);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(locs.uBackdrop, 0);
-
-    const aPos = gl.getAttribLocation(program, 'aPosition');
-    gl.enableVertexAttribArray(aPos);
-    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  }
-
-  function resize() {
-    const rect = host.getBoundingClientRect();
-    cvs.width = Math.round(rect.width);
-    cvs.height = Math.round(rect.height);
-    render();
-  }
-
-  // Handle Tab navigation interaction
-  const tabs = host.querySelectorAll('.nav-tab');
-  const lens = host.querySelector('#liquid-nav-lens');
-  if (tabs.length && lens) {
-    function updateLens(tab) {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      lens.style.left = tab.offsetLeft + 'px';
-      lens.style.width = tab.offsetWidth + 'px';
-    }
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => updateLens(tab));
-    });
-    const initialActive = host.querySelector('.nav-tab.active') || tabs[0];
-    if (initialActive) updateLens(initialActive);
-  }
-
-  window.addEventListener('resize', resize);
-  resize();
+  let hasSource = false;
 
   return {
-    render,
-    setBackdrop,
-    updateTexture,
-    resize,
-    destroy() {
-      window.removeEventListener('resize', resize);
+    updateTexture(source) {
+      if (!source) return;
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+      hasSource = true;
+    },
+    render(rect) {
+      canvas.width = Math.round(rect.width);
+      canvas.height = Math.round(rect.height);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      gl.useProgram(prog);
+      gl.uniform1i(locs.uHasBackdrop, hasSource ? 1 : 0);
+      gl.uniform2f(locs.uScreenSize, window.innerWidth, window.innerHeight);
+      gl.uniform2f(locs.uLensPos, rect.left, rect.top);
+      gl.uniform2f(locs.uLensSize, rect.width, rect.height);
+      gl.uniform1f(locs.uRadius, opt.radius ?? 9999);
+      gl.uniform1f(locs.uRefraction, opt.refraction ?? ${computedRefraction});
+      gl.uniform1f(locs.uBevel, opt.bevel ?? ${computedBevel});
+      gl.uniform1f(locs.uDispersion, opt.dispersion ?? ${dispersionVal});
+      gl.uniform1f(locs.uDarkTint, opt.darkTint ?? ${darkTintVal});
+      gl.uniform1f(locs.uBlur, opt.blur ?? ${blurVal});
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.uniform1i(locs.uBackdrop, 0);
+
+      const aPos = gl.getAttribLocation(prog, 'aPos');
+      gl.enableVertexAttribArray(aPos);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
   };
 }
 
-// Auto-initialization
+/**
+ * Initializes the full Liquid Glass optical engine matching the interactive demo.
+ */
+function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
+  const container = document.querySelector(containerSelector);
+  if (!container) return null;
+
+  const trackCanvas = container.querySelector('#liquid-glass-canvas');
+  const lens = container.querySelector('#liquid-nav-lens');
+  const lensCanvas = lens ? lens.querySelector('#liquid-lens-canvas') : null;
+  const refractedContainer = lens ? lens.querySelector('#liquid-lens-refracted') : null;
+  const nav = container.querySelector('.liquid-glass-nav');
+  const tabs = nav ? Array.from(nav.querySelectorAll('.nav-tab')) : [];
+
+  const trackRenderer = trackCanvas ? createSnellRenderer(trackCanvas, {
+    refraction: ${computedRefraction},
+    bevel: ${computedBevel},
+    dispersion: ${dispersionVal},
+    darkTint: ${darkTintVal},
+    blur: ${blurVal},
+    radius: ${topRadiusVal}
+  }) : null;
+
+  const lensRenderer = lensCanvas ? createSnellRenderer(lensCanvas, {
+    refraction: (${computedRefraction} * 1.25),
+    bevel: ${computedBevel},
+    dispersion: ${dispersionVal},
+    darkTint: ${lensDarkTintVal},
+    blur: ${blurVal},
+    radius: 9999
+  }) : null;
+
+  // Build 3D refracted icon duplicates inside the active lens
+  const refractedSlots = [];
+  if (refractedContainer && tabs.length) {
+    refractedContainer.innerHTML = '';
+    tabs.forEach((tab, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'refracted-icon-slot';
+      slot.style.width = tab.offsetWidth + 'px';
+      const inner = document.createElement('div');
+      inner.className = 'refracted-icon-inner';
+      const svg = tab.querySelector('svg');
+      if (svg) inner.appendChild(svg.cloneNode(true));
+      slot.appendChild(inner);
+      refractedContainer.appendChild(slot);
+      refractedSlots.push(slot);
+    });
+  }
+
+  let backdropSource = null;
+  let activeTabIdx = 0;
+  let bubbleCenterX = 0;
+  let currentCenterX = 0;
+  let targetCenterX = 0;
+  let isDraggingLens = false;
+  let dragStartX = 0;
+  let dragStartCenterX = 0;
+  let animId = null;
+
+  function updateOptics(centerX) {
+    currentCenterX = centerX;
+    const trackRect = container.getBoundingClientRect();
+    if (trackRenderer && backdropSource) trackRenderer.render(trackRect);
+
+    if (lens && nav && tabs.length) {
+      lens.style.left = centerX + 'px';
+      const lensRect = lens.getBoundingClientRect();
+      if (lensRenderer && backdropSource) lensRenderer.render(lensRect);
+
+      const tabCount = tabs.length;
+      const trackWidth = nav.offsetWidth;
+      const slotWidth = trackWidth / tabCount;
+      const bubbleHalfW = lens.offsetWidth / 2;
+
+      for (let i = 0; i < tabCount; i++) {
+        const iconCenterX = (i + 0.5) * slotWidth;
+        const deltaX = iconCenterX - centerX;
+        const u = bubbleHalfW > 0 ? deltaX / bubbleHalfW : 0;
+        const absU = Math.abs(u);
+
+        // 1. Base track icon yields smoothly
+        const baseTab = tabs[i];
+        const baseOpacity = absU >= 1.0 ? 1.0 : Math.max(0, Math.pow(Math.max(0, (absU - 0.15) / 0.85), 1.6));
+        baseTab.style.opacity = baseOpacity.toFixed(3);
+        baseTab.style.transform = \`scale(\${(0.88 + 0.12 * Math.min(1, absU)).toFixed(3)})\`;
+
+        // 2. Refracted icon with physical spherical dome curvature
+        const refrSlot = refractedSlots[i];
+        if (!refrSlot) continue;
+        refrSlot.style.width = slotWidth + 'px';
+
+        if (absU >= 1.0) {
+          refrSlot.style.display = 'none';
+        } else {
+          refrSlot.style.display = 'flex';
+          refrSlot.style.left = \`calc(50% + \${deltaX}px)\`;
+
+          const clampedU = Math.max(-1, Math.min(1, u));
+          const signedEdge = Math.sin((Math.PI / 2) * clampedU);
+          const edgeFactor = Math.pow(Math.abs(clampedU), 1.20);
+          const rimFade = absU < 0.70 ? 1.0 : Math.cos(((absU - 0.70) / 0.30) * (Math.PI / 2));
+
+          const microStretchX = 1.0 + edgeFactor * 0.20;
+          const microCompressY = 1.0 - edgeFactor * 0.07;
+          const microPullX = signedEdge * 3.5;
+          const domeCurvatureY = -edgeFactor * 11.0;
+          const domeCurvatureX = signedEdge * 12.0;
+          const microSkewX = -signedEdge * 5.5;
+
+          refrSlot.style.opacity = rimFade.toFixed(3);
+          const inner = refrSlot.firstElementChild;
+          if (inner) {
+            inner.style.transform = \`perspective(180px) translate3d(\${microPullX.toFixed(2)}px, 0, 0) rotateX(\${domeCurvatureY.toFixed(2)}deg) rotateY(\${domeCurvatureX.toFixed(2)}deg) skewX(\${microSkewX.toFixed(2)}deg) scale(\${microStretchX.toFixed(3)}, \${microCompressY.toFixed(3)})\`;
+          }
+        }
+      }
+    }
+  }
+
+  function getSlotCenter(idx) {
+    if (!nav || !tabs.length) return 0;
+    const slotW = nav.offsetWidth / tabs.length;
+    return (idx + 0.5) * slotW;
+  }
+
+  function snapToTab(idx, duration = 380) {
+    activeTabIdx = idx;
+    tabs.forEach((t, i) => {
+      if (i === idx) t.classList.add('active');
+      else t.classList.remove('active');
+    });
+
+    targetCenterX = getSlotCenter(idx);
+    const startX = currentCenterX;
+    const startTime = performance.now();
+
+    if (animId) cancelAnimationFrame(animId);
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Smooth cubic-bezier spring easing
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const nextX = startX + (targetCenterX - startX) * ease;
+      updateOptics(nextX);
+      if (progress < 1) {
+        animId = requestAnimationFrame(step);
+      }
+    }
+    animId = requestAnimationFrame(step);
+  }
+
+  // Interactive Lens Dragging with Touch & Mouse
+  if (lens && nav) {
+    lens.addEventListener('pointerdown', (e) => {
+      isDraggingLens = true;
+      lens.setPointerCapture(e.pointerId);
+      dragStartX = e.clientX;
+      dragStartCenterX = currentCenterX;
+      if (animId) cancelAnimationFrame(animId);
+      e.stopPropagation();
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDraggingLens) return;
+      const dx = e.clientX - dragStartX;
+      const slotW = nav.offsetWidth / tabs.length;
+      const minX = slotW * 0.45;
+      const maxX = nav.offsetWidth - slotW * 0.45;
+      let nextX = dragStartCenterX + dx;
+      if (nextX < minX) nextX = minX - Math.pow(minX - nextX, 0.7);
+      if (nextX > maxX) nextX = maxX + Math.pow(nextX - maxX, 0.7);
+      updateOptics(nextX);
+    });
+
+    const endLensDrag = (e) => {
+      if (!isDraggingLens) return;
+      isDraggingLens = false;
+      try { lens.releasePointerCapture(e.pointerId); } catch (_) {}
+      const slotW = nav.offsetWidth / tabs.length;
+      const nearestIdx = Math.max(0, Math.min(tabs.length - 1, Math.round((currentCenterX / slotW) - 0.5)));
+      snapToTab(nearestIdx);
+    };
+
+    window.addEventListener('pointerup', endLensDrag);
+    window.addEventListener('pointercancel', endLensDrag);
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        snapToTab(i);
+      });
+    });
+  }
+
+  function resize() {
+    if (tabs.length) {
+      currentCenterX = getSlotCenter(activeTabIdx);
+      targetCenterX = currentCenterX;
+      updateOptics(currentCenterX);
+    }
+  }
+
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 30);
+
+  return {
+    setBackdrop(canvasOrImg) {
+      backdropSource = canvasOrImg;
+      if (trackRenderer) trackRenderer.updateTexture(backdropSource);
+      if (lensRenderer) lensRenderer.updateTexture(backdropSource);
+      updateOptics(currentCenterX || getSlotCenter(activeTabIdx));
+    },
+    updateTexture() {
+      if (backdropSource) {
+        if (trackRenderer) trackRenderer.updateTexture(backdropSource);
+        if (lensRenderer) lensRenderer.updateTexture(backdropSource);
+        updateOptics(currentCenterX);
+      }
+    },
+    render() {
+      updateOptics(currentCenterX);
+    },
+    resize
+  };
+}
+
+// Auto-boot on load
 document.addEventListener('DOMContentLoaded', () => {
   const bgCanvas = document.getElementById('backdrop-canvas');
-  const engine = initLiquidGlass('#liquid-glass-capsule', '#liquid-glass-canvas');
+  const engine = initLiquidGlass('#liquid-glass-capsule');
   if (engine && bgCanvas) {
     engine.setBackdrop(bgCanvas);
-    engine.render();
   }
 });`;
 
@@ -693,6 +946,8 @@ ${html}
   </div>
 
   <script>
+${js}
+
     // ============================================================
     // DEMO BACKDROP PATTERN GENERATOR (STRIPES, CROSS, TYPOGRAPHY)
     // ============================================================
@@ -701,11 +956,12 @@ ${html}
     let currentPatternIdx = 0;
     const patterns = ['stripes', 'cross', 'typography'];
     let userImg = null;
+    let glassEngine = null;
 
     function cyclePattern() {
       currentPatternIdx = (currentPatternIdx + 1) % patterns.length;
       drawBackdrop();
-      if (glassInstance) glassInstance.updateTexture();
+      if (glassEngine) glassEngine.updateTexture();
     }
 
     function loadCustomImage(input) {
@@ -719,7 +975,7 @@ ${html}
             if (!patterns.includes('image')) patterns.push('image');
             currentPatternIdx = patterns.indexOf('image');
             drawBackdrop();
-            if (glassInstance) glassInstance.updateTexture();
+            if (glassEngine) glassEngine.updateTexture();
           };
           img.src = e.target.result;
         };
@@ -748,66 +1004,66 @@ ${html}
           backdropCtx.fillStyle = colors[step % colors.length];
           backdropCtx.beginPath();
           backdropCtx.moveTo(0, i);
-          backdropCtx.lineTo(w, i + w * 0.75);
-          backdropCtx.lineTo(w, i + w * 0.75 + stripeW);
+          backdropCtx.lineTo(w, i + w);
+          backdropCtx.lineTo(w, i + w + stripeW);
           backdropCtx.lineTo(0, i + stripeW);
           backdropCtx.closePath();
           backdropCtx.fill();
         }
       } else if (mode === 'cross') {
-        backdropCtx.fillStyle = '#040508';
+        backdropCtx.fillStyle = '#08080c';
         backdropCtx.fillRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const crossW = Math.max(70, Math.round(w * 0.14));
 
         backdropCtx.fillStyle = '#2563eb';
-        const crossW = Math.min(w, h) * 0.28;
-        backdropCtx.fillRect((w - crossW) / 2, 0, crossW, h);
-        backdropCtx.fillRect(0, (h - crossW) / 2, w, crossW);
+        backdropCtx.fillRect(0, cy - crossW / 2, w, crossW);
+        backdropCtx.fillRect(cx - crossW / 2, 0, crossW, h);
 
-        backdropCtx.fillStyle = 'rgba(236, 72, 153, 0.85)';
-        backdropCtx.beginPath();
-        backdropCtx.arc(w * 0.25, h * 0.35, Math.min(w, h) * 0.16, 0, Math.PI * 2);
-        backdropCtx.fill();
-      } else if (mode === 'typography') {
-        backdropCtx.fillStyle = '#030406';
-        backdropCtx.fillRect(0, 0, w, h);
-
+        backdropCtx.fillStyle = '#ffffff';
+        backdropCtx.font = '900 clamp(36px, 8vw, 84px) sans-serif';
         backdropCtx.textAlign = 'center';
         backdropCtx.textBaseline = 'middle';
-        backdropCtx.font = 'bold 26px ui-monospace, monospace';
-        backdropCtx.fillStyle = '#ffffff';
-        backdropCtx.fillText('LIQUID GLASS SNELL REFRACTION', w / 2, h * 0.36);
-
-        backdropCtx.font = 'bold 15px ui-monospace, monospace';
-        backdropCtx.fillStyle = '#38bdf8';
-        backdropCtx.fillText('120 FPS REAL-TIME GPU RAY-TRACING', w / 2, h * 0.64);
-      } else if (mode === 'image' && userImg) {
-        backdropCtx.fillStyle = '#06070b';
+        backdropCtx.fillText('REFRACTED', cx, cy - crossW);
+        backdropCtx.fillText('OPTICS', cx, cy + crossW);
+      } else if (mode === 'typography') {
+        backdropCtx.fillStyle = '#05070d';
         backdropCtx.fillRect(0, 0, w, h);
-        const iw = userImg.naturalWidth || userImg.width;
-        const ih = userImg.naturalHeight || userImg.height;
-        const scale = Math.max(w / iw, h / ih);
-        const dw = iw * scale;
-        const dh = ih * scale;
-        backdropCtx.drawImage(userImg, (w - dw) / 2, (h - dh) / 2, dw, dh);
+
+        backdropCtx.font = '900 64px -apple-system, sans-serif';
+        backdropCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        for (let y = 80; y < h + 80; y += 100) {
+          backdropCtx.fillText('LIQUID GLASS • SNELL RAY TRACING • MR PROG', 20, y);
+        }
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const grad = backdropCtx.createRadialGradient(cx, cy, 10, cx, cy, 340);
+        grad.addColorStop(0, '#06b6d4');
+        grad.addColorStop(0.5, '#3b82f6');
+        grad.addColorStop(1, 'transparent');
+        backdropCtx.fillStyle = grad;
+        backdropCtx.beginPath();
+        backdropCtx.arc(cx, cy, 340, 0, Math.PI * 2);
+        backdropCtx.fill();
+      } else if (mode === 'image' && userImg) {
+        backdropCtx.drawImage(userImg, 0, 0, w, h);
       }
     }
-
-${js}
-
-    // Initialize Demo
-    let glassInstance = null;
 
     function resizeDemo() {
       backdropCanvas.width = window.innerWidth;
       backdropCanvas.height = window.innerHeight;
       drawBackdrop();
 
-      if (!glassInstance) {
-        glassInstance = initLiquidGlass('#liquid-glass-capsule', '#liquid-glass-canvas');
-        glassInstance.setBackdrop(backdropCanvas);
+      if (!glassEngine) {
+        glassEngine = initLiquidGlass('#liquid-glass-capsule');
+        if (glassEngine) glassEngine.setBackdrop(backdropCanvas);
       } else {
-        glassInstance.updateTexture();
-        glassInstance.resize();
+        glassEngine.updateTexture();
+        glassEngine.resize();
       }
     }
 
@@ -815,14 +1071,14 @@ ${js}
     window.addEventListener('load', resizeDemo);
     resizeDemo();
 
-    // Drag-Anywhere Physics
+    // Drag-Anywhere Physics for the whole capsule wrapper
     const wrapper = document.getElementById('capsule-wrapper');
-    let isDragging = false;
+    let isDraggingWrapper = false;
     let startX = 0, startY = 0, initLeft = 0, initTop = 0;
 
     wrapper.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.nav-tab') || e.target.closest('.ctrl-btn')) return;
-      isDragging = true;
+      if (e.target.closest('#liquid-nav-lens') || e.target.closest('.nav-tab') || e.target.closest('.ctrl-btn')) return;
+      isDraggingWrapper = true;
       wrapper.setPointerCapture(e.pointerId);
       startX = e.clientX;
       startY = e.clientY;
@@ -832,22 +1088,22 @@ ${js}
     });
 
     window.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
+      if (!isDraggingWrapper) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       wrapper.style.left = (initLeft + dx) + 'px';
       wrapper.style.top = (initTop + dy) + 'px';
-      if (glassInstance) glassInstance.render();
+      if (glassEngine) glassEngine.render();
     });
 
-    const endDrag = (e) => {
-      if (isDragging) {
-        isDragging = false;
+    const endWrapperDrag = (e) => {
+      if (isDraggingWrapper) {
+        isDraggingWrapper = false;
         try { if (wrapper.hasPointerCapture(e.pointerId)) wrapper.releasePointerCapture(e.pointerId); } catch (_) {}
       }
     };
-    wrapper.addEventListener('pointerup', endDrag);
-    wrapper.addEventListener('pointercancel', endDrag);
+    window.addEventListener('pointerup', endWrapperDrag);
+    window.addEventListener('pointercancel', endWrapperDrag);
   </script>
 </body>
 </html>`;
@@ -886,7 +1142,7 @@ export function generateNodeReactCode(
   componentSnippet: string;
   fullComponentCode: string;
 } {
-  const darkTint = (config.darkTint ?? 0.20).toFixed(3);
+  const darkTint = (config.darkTint ?? 0.15).toFixed(3);
   const radius = config.radius >= 999 ? 9999 : config.radius;
   const isUltra = (config.thicknessStep ?? 5) >= 9;
   const refractionVal = (isUltra
@@ -897,12 +1153,12 @@ export function generateNodeReactCode(
     ? config.bevel * 2.3
     : config.bevel * (0.75 + ((config.thicknessStep ?? 5) / 10) * 0.55)
   );
-  const dispersionVal = (config.dispersion ?? 0.25).toFixed(4);
+  const dispersionVal = (config.dispersion ?? 0.28).toFixed(4);
   const blurVal = (config.blur ?? 0).toFixed(1);
-  const borderOpacityVal = (config.borderOpacity ?? 0.12).toFixed(3);
+  const borderOpacityVal = (config.borderOpacity ?? 0.18).toFixed(3);
   const shadowStepVal = config.shadowStep ?? 5;
-  const viscosityVal = (config.viscosity ?? 0.6).toFixed(2);
-  const thicknessVal = (config.thickness ?? 450).toString();
+  const viscosityVal = (config.viscosity ?? 0.58).toFixed(2);
+  const thicknessVal = (config.thickness ?? 475).toString();
   const tintColorVal = config.tintColor ?? '#000000';
 
   const installCommand = `npm i @mr-prog/liquid-glass`;

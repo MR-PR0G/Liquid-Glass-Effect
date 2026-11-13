@@ -2252,7 +2252,7 @@ import '@mr-prog/liquid-glass/liquid-glass.css';
                 <BookOpen size={16} className="text-cyan-400" />
                 <h4 className="font-mono text-xs sm:text-sm font-bold text-white tracking-wide flex items-center gap-2">
                   <span>LIQUID GLASS TECHNICAL DOCUMENTATION</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white font-mono font-bold">v0.2.7</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white font-mono font-bold">v0.2.8</span>
                 </h4>
               </div>
               <button 

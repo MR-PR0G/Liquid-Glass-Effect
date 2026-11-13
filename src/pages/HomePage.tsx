@@ -157,7 +157,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Minimalist License & Version Badges */}
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-[11px] font-mono text-zinc-400 select-none">
           <span className="px-3 py-0.5 rounded-full bg-white/10 border border-white/20 text-white font-mono font-bold tracking-wider text-xs shadow-sm">
-            v0.2.7
+            v0.2.8
           </span>
           <a
             href="https://github.com/MR-PR0G/LiquidGlass"

@@ -1,7 +1,7 @@
 {
   "name": "liquid-glass-generator",
   "private": true,
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Interactive WebGL Liquid Glass Generator with physical Snell refraction and real-time controls.",
   "author": "MR PROG (https://github.com/MR-PR0G)",
   "license": "MIT",

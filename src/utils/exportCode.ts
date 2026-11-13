@@ -63,12 +63,12 @@ export function generateSeparatedExportCode(
     <nav class="liquid-glass-nav" aria-label="Tab Navigation">
       <!-- 1. Base Track Icons (Stable resting layer) -->
       <div class="nav-base-track">
-        <button class="nav-tab active" data-index="0" aria-label="Home">
+        <button class="nav-tab" data-index="0" aria-label="Home">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
         </button>
-        <button class="nav-tab" data-index="1" aria-label="Search">
+        <button class="nav-tab active" data-index="1" aria-label="Search">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
@@ -87,7 +87,7 @@ export function generateSeparatedExportCode(
       </div>
 
       <!-- 2. Draggable Liquid Meniscus Lens with Dedicated WebGL Snell Refraction & 3D Optics -->
-      <div id="liquid-nav-lens" class="liquid-nav-lens">
+      <div id="liquid-nav-lens" class="liquid-nav-lens" style="left: 37.5%;">
         <!-- Physical Snell Ray-Tracing Layer for the Active Lens -->
         <canvas id="liquid-lens-canvas" class="liquid-lens-canvas"></canvas>
         <!-- Dark Tint Absorption Layer -->
@@ -118,8 +118,9 @@ export function generateSeparatedExportCode(
         <button class="ctrl-btn btn-secondary" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
         </button>
-        <button class="ctrl-btn btn-primary" aria-label="Play">
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <button class="ctrl-btn btn-primary" id="player-toggle-btn" aria-label="Pause">
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </button>
         <button class="ctrl-btn btn-secondary" aria-label="Next">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
@@ -455,7 +456,8 @@ function createSnellRenderer(canvas, opt) {
 
     uniform sampler2D uBackdrop;
     uniform bool uHasBackdrop;
-    uniform vec2 uScreenSize;
+    uniform vec2 uBackdropOrigin;  // capsule center in backdrop UV
+    uniform vec2 uBackdropScale;   // one radius in backdrop UV
     uniform vec4 uRect;            // left, top, width, height (device pixels)
     uniform float uRadius;         // corner radius in pixels
     uniform float uBevel;          // bevel width in pixels
@@ -466,6 +468,9 @@ function createSnellRenderer(canvas, opt) {
     uniform float uBlur;           // Gaussian blur level
     uniform float uReflectivity;   // specular glaze reflection
 
+    vec3 toLinear(vec3 c) { return pow(c, vec3(2.2)); }
+    vec3 toSRGB(vec3 c) { return pow(max(c, 0.0), vec3(1.0 / 2.2)); }
+
     float squircleProfile(float x) {
       float r = 1.0 - clamp(x, 0.0, 1.0);
       return sqrt(sqrt(max(0.0, 1.0 - r * r * r * r)));
@@ -474,6 +479,28 @@ function createSnellRenderer(canvas, opt) {
     float getBoxSdf(vec2 pt, vec2 halfExt, float r) {
       vec2 d = abs(pt) - halfExt + r;
       return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;
+    }
+
+    vec3 pageThrough(vec2 xy) {
+      vec2 uv = uBackdropOrigin + vec2(xy.x, -xy.y) * uBackdropScale;
+      vec2 clamped = clamp(uv, 0.0, 1.0);
+      vec3 base = toLinear(texture(uBackdrop, clamped).rgb);
+      if (uBlur > 0.01) {
+        float r = clamp(uBlur * 0.0014, 0.0004, 0.0075);
+        vec3 acc = base * 0.28;
+        float r1 = r * 0.45;
+        acc += toLinear(texture(uBackdrop, clamp(clamped + vec2(r1, 0.0), 0.0, 1.0)).rgb) * 0.12;
+        acc += toLinear(texture(uBackdrop, clamp(clamped - vec2(r1, 0.0), 0.0, 1.0)).rgb) * 0.12;
+        acc += toLinear(texture(uBackdrop, clamp(clamped + vec2(0.0, r1), 0.0, 1.0)).rgb) * 0.12;
+        acc += toLinear(texture(uBackdrop, clamp(clamped - vec2(0.0, r1), 0.0, 1.0)).rgb) * 0.12;
+        float r2 = r * 0.85;
+        acc += toLinear(texture(uBackdrop, clamp(clamped + vec2(r2 * 0.707, r2 * 0.707), 0.0, 1.0)).rgb) * 0.06;
+        acc += toLinear(texture(uBackdrop, clamp(clamped + vec2(-r2 * 0.707, r2 * 0.707), 0.0, 1.0)).rgb) * 0.06;
+        acc += toLinear(texture(uBackdrop, clamp(clamped + vec2(r2 * 0.707, -r2 * 0.707), 0.0, 1.0)).rgb) * 0.06;
+        acc += toLinear(texture(uBackdrop, clamp(clamped + vec2(-r2 * 0.707, -r2 * 0.707), 0.0, 1.0)).rgb) * 0.06;
+        return acc;
+      }
+      return base;
     }
 
     void main() {
@@ -555,54 +582,27 @@ function createSnellRenderer(canvas, opt) {
       shift *= bevelTransition;
       target = p + shift;
 
-      vec2 originUv = vec2(uRect.x + uRect.z * 0.5, uRect.y + uRect.w * 0.5) / uScreenSize;
-      vec2 scaleUv = vec2(rad) / uScreenSize;
-      vec2 uvG = originUv + vec2(target.x, -target.y) * scaleUv;
+      vec3 color = pageThrough(target);
 
       float split = 0.75 * uDispersion;
       float shiftLen = length(shift);
-      vec2 uvR = uvG;
-      vec2 uvB = uvG;
       if (split > 0.01 && shiftLen > 1e-4) {
         vec2 shiftDir = shift / shiftLen;
         float dispOffset = split * (shiftLen * 0.75 + 0.015 * bevelTransition);
-        vec2 targetR = p + shift - shiftDir * dispOffset;
-        vec2 targetB = p + shift + shiftDir * dispOffset;
-        uvR = originUv + vec2(targetR.x, -targetR.y) * scaleUv;
-        uvB = originUv + vec2(targetB.x, -targetB.y) * scaleUv;
-      }
-
-      vec3 color = vec3(
-        texture(uBackdrop, clamp(uvR, 0.0, 1.0)).r,
-        texture(uBackdrop, clamp(uvG, 0.0, 1.0)).g,
-        texture(uBackdrop, clamp(uvB, 0.0, 1.0)).b
-      );
-
-      if (uBlur > 0.01) {
-        float r = clamp(uBlur * 0.0014, 0.0004, 0.0075);
-        vec3 acc = color * 0.28;
-        float r1 = r * 0.45;
-        acc += texture(uBackdrop, clamp(uvG + vec2(r1, 0.0), 0.0, 1.0)).rgb * 0.12;
-        acc += texture(uBackdrop, clamp(uvG - vec2(r1, 0.0), 0.0, 1.0)).rgb * 0.12;
-        acc += texture(uBackdrop, clamp(uvG + vec2(0.0, r1), 0.0, 1.0)).rgb * 0.12;
-        acc += texture(uBackdrop, clamp(uvG - vec2(0.0, r1), 0.0, 1.0)).rgb * 0.12;
-        float r2 = r * 0.85;
-        acc += texture(uBackdrop, clamp(uvG + vec2(r2 * 0.707, r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
-        acc += texture(uBackdrop, clamp(uvG + vec2(-r2 * 0.707, r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
-        acc += texture(uBackdrop, clamp(uvG + vec2(r2 * 0.707, -r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
-        acc += texture(uBackdrop, clamp(uvG + vec2(-r2 * 0.707, -r2 * 0.707), 0.0, 1.0)).rgb * 0.06;
-        color = acc;
+        color.r = pageThrough(p + shift - shiftDir * dispOffset).r;
+        color.b = pageThrough(p + shift + shiftDir * dispOffset).b;
       }
 
       float cosI = max(frontNormal.z, 0.0);
-      float topGlaze = pow(max(grad.y - 0.3, 0.0), 2.2) * pow(1.0 - cosI, 2.0) * 0.12 * uReflectivity;
+      float topGlaze = pow(max(grad.y - 0.3, 0.0), 2.2) * pow(1.0 - cosI, 2.0) * 0.18 * uReflectivity;
       color += vec3(1.0) * topGlaze;
 
       if (uDarkTint > 0.001) {
-        color = mix(color, uTintColor, uDarkTint);
+        color = mix(color, toLinear(uTintColor), uDarkTint);
       }
 
-      fragColor = vec4(color, coverage);
+      vec3 encoded = toSRGB(color);
+      fragColor = vec4(encoded, coverage);
     }
   \`;
 
@@ -632,7 +632,8 @@ function createSnellRenderer(canvas, opt) {
   const locs = {
     uBackdrop: gl.getUniformLocation(prog, 'uBackdrop'),
     uHasBackdrop: gl.getUniformLocation(prog, 'uHasBackdrop'),
-    uScreenSize: gl.getUniformLocation(prog, 'uScreenSize'),
+    uBackdropOrigin: gl.getUniformLocation(prog, 'uBackdropOrigin'),
+    uBackdropScale: gl.getUniformLocation(prog, 'uBackdropScale'),
     uRect: gl.getUniformLocation(prog, 'uRect'),
     uRadius: gl.getUniformLocation(prog, 'uRadius'),
     uRefraction: gl.getUniformLocation(prog, 'uRefraction'),
@@ -654,7 +655,7 @@ function createSnellRenderer(canvas, opt) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
       hasSource = true;
     },
-    render(rect) {
+    render(rect, backdropSource) {
       canvas.width = Math.round(rect.width);
       canvas.height = Math.round(rect.height);
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -663,7 +664,16 @@ function createSnellRenderer(canvas, opt) {
 
       gl.useProgram(prog);
       gl.uniform1i(locs.uHasBackdrop, hasSource ? 1 : 0);
-      gl.uniform2f(locs.uScreenSize, window.innerWidth, window.innerHeight);
+
+      const page = backdropSource ? backdropSource.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+      const capW = (page.width > 0) ? page.width : window.innerWidth;
+      const capH = (page.height > 0) ? page.height : window.innerHeight;
+      const rad = rect.height * 0.5;
+      const centerX = rect.left + rect.width * 0.5;
+      const centerY = rect.top + rect.height * 0.5;
+
+      gl.uniform2f(locs.uBackdropOrigin, (centerX - page.left) / capW, (centerY - page.top) / capH);
+      gl.uniform2f(locs.uBackdropScale, rad / capW, rad / capH);
       gl.uniform4f(locs.uRect, rect.left, rect.top, rect.width, rect.height);
       gl.uniform1f(locs.uRadius, opt.radius ?? 9999);
       gl.uniform1f(locs.uRefraction, opt.refraction ?? ${computedRefraction});
@@ -749,7 +759,7 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
 
   let backdropSource = null;
   const initialActive = tabs.findIndex(t => t.classList.contains('active'));
-  let activeTabIdx = initialActive >= 0 ? initialActive : 0;
+  let activeTabIdx = initialActive >= 0 ? initialActive : (tabs.length > 1 ? 1 : 0);
   let bubbleCenterX = 0;
   let currentCenterX = 0;
   let targetCenterX = 0;
@@ -768,12 +778,12 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
   function updateOptics(centerX) {
     currentCenterX = centerX;
     const trackRect = container.getBoundingClientRect();
-    if (trackRenderer && backdropSource) trackRenderer.render(trackRect);
+    if (trackRenderer && backdropSource) trackRenderer.render(trackRect, backdropSource);
 
     if (lens && nav && tabs.length) {
       lens.style.left = centerX + 'px';
       const lensRect = lens.getBoundingClientRect();
-      if (lensRenderer && backdropSource) lensRenderer.render(lensRect);
+      if (lensRenderer && backdropSource) lensRenderer.render(lensRect, backdropSource);
 
       const tabCount = tabs.length;
       const trackWidth = (nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width ?? 540});
@@ -890,6 +900,25 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
       tab.addEventListener('click', (e) => {
         e.stopPropagation();
         snapToTab(i);
+      });
+    });
+  }
+
+  // Interactive Cupertino Player Controls
+  const playerToggleBtn = container.querySelector('#player-toggle-btn');
+  if (playerToggleBtn) {
+    let isPlaying = true;
+    const pauseIcon = playerToggleBtn.querySelector('.icon-pause');
+    const playIcon = playerToggleBtn.querySelector('.icon-play');
+    const eqBars = container.querySelectorAll('.eq-bar');
+    playerToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isPlaying = !isPlaying;
+      playerToggleBtn.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+      if (pauseIcon) pauseIcon.style.display = isPlaying ? 'block' : 'none';
+      if (playIcon) playIcon.style.display = isPlaying ? 'none' : 'block';
+      eqBars.forEach((bar) => {
+        bar.style.animationPlayState = isPlaying ? 'running' : 'paused';
       });
     });
   }
@@ -1049,7 +1078,7 @@ ${js}
     const backdropCanvas = document.getElementById('backdrop-canvas');
     const backdropCtx = backdropCanvas.getContext('2d');
     let currentPatternIdx = 0;
-    const patterns = ['stripes', 'cross', 'typography'];
+    const patterns = ['cross', 'stripes', 'typography'];
     let userImg = null;
     let glassEngine = null;
 

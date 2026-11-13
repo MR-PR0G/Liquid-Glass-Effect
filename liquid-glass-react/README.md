@@ -36,7 +36,7 @@ No more cloudy, flat `backdrop-filter: blur()` plastic.
 </p>
 
 <p align="center">
-  <a href="https://mr-pr0g.github.io/LiquidGlass/"><strong>👉 Click here to test live liquid refraction, audio player & navigation bar in your browser 👈</strong></a>
+  <a href="https://mr-pr0g.github.io/LiquidGlass/"><strong>👉 Click to open the Interactive Live Demo 👈</strong></a>
 </p>
 
 </div>

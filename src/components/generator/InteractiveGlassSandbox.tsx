@@ -472,9 +472,18 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
 
       let notifyRaf = 0;
       let lastNotify = 0;
+      const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 640;
+      const isLowEndDevice = typeof navigator !== 'undefined' && (
+        (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+        // @ts-expect-error deviceMemory is non-standard
+        (navigator.deviceMemory && navigator.deviceMemory <= 4)
+      );
+      const isConstrained = isMobileScreen || isLowEndDevice;
+
       const onThrottledRender = (c: HTMLCanvasElement) => {
         const now = performance.now();
-        if (now - lastNotify < 24) return;
+        const minInterval = isConstrained ? 33 : 18;
+        if (now - lastNotify < minInterval) return;
         if (notifyRaf) return;
         notifyRaf = requestAnimationFrame(() => {
           notifyBackdropChanged(c);
@@ -483,20 +492,18 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
         });
       };
 
-      const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 640;
-
       const engine = createSolidEngine(
         canvas,
         {
           ...shapeDefaults,
           background: '#040509',
-          count: isMobileScreen ? 8 : 24,
-          size: isMobileScreen ? 32 : 46,
-          spawnRate: isMobileScreen ? 3 : 14,
+          count: isConstrained ? 5 : 24,
+          size: isConstrained ? 30 : 46,
+          spawnRate: isConstrained ? 1.5 : 14,
           appearanceDuration: 0.5,
           restitution: 0.45,
           friction: 0.4,
-          followCursor: !isMobileScreen,
+          followCursor: !isConstrained,
           interactive: true,
         },
         undefined,
@@ -1114,7 +1121,9 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
         onPointerMove={handlePointerMoveStage}
         onPointerUp={handlePointerUpStage}
         onPointerCancel={handlePointerUpStage}
-        className="relative rounded-3xl border border-white/15 bg-[#030408] overflow-hidden shadow-2xl shadow-cyan-950/20 w-full h-[500px] select-none cursor-grab active:cursor-grabbing flex flex-col justify-between transition-all duration-300"
+        className={`relative rounded-3xl border border-white/15 bg-[#030408] overflow-hidden shadow-2xl shadow-cyan-950/20 w-full select-none cursor-grab active:cursor-grabbing flex flex-col justify-between transition-all duration-300 ${
+          isControlsExpanded ? 'h-[550px] sm:h-[500px]' : 'h-[530px] sm:h-[500px]'
+        }`}
       >
         {/* Native Backdrop Canvas: Direct GPU texture feed */}
         <canvas

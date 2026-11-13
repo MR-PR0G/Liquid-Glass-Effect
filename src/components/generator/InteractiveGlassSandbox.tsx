@@ -75,7 +75,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
   const fileInputRef = useRef<HTMLInputElement>(null);
   const customImageElementRef = useRef<HTMLImageElement | null>(null);
   const [innerContentMode, setInnerContentMode] = useState<'text' | 'nav' | 'player'>(urlMode || 'nav');
-  const [isPlayingAudio, setIsPlayingAudio] = useState(urlMode === 'player' || true);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(true);
   const [shadowTone, setShadowTone] = useState<ShadowTone>('dark');
   const [isShadowInverted, setIsShadowInverted] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState(1);
@@ -865,8 +865,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                 shadowTone={shadowTone}
                 borderOpacity={config.borderOpacity}
                 blur={config.blur}
-                height={capH}
-                maxWidth={capW}
+                style={{ height: `${capH}px`, maxWidth: `${capW}px` }}
               />
             </div>
           )}

@@ -693,6 +693,9 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           transform: `translate3d(-50%, -50%, 0) scale(${effectiveScaleX}, ${effectiveScaleY})`,
           transformOrigin: 'center center',
           borderRadius: '9999px',
+          clipPath: 'inset(0 round 9999px)',
+          WebkitClipPath: 'inset(0 round 9999px)',
+          isolation: 'isolate',
           zIndex: 20,
           boxSizing: 'border-box',
           // Always smooth fluid size and styling transitions (fixes stiff jump on tab release)
@@ -772,7 +775,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
 
         {/* 2. Refracted Optical Content Layer (Strictly clipped inside the real bubble capsule!) */}
         <div 
-          className="absolute inset-0 w-full h-full pointer-events-none" 
+          className="absolute inset-0 w-full h-full pointer-events-none rounded-full overflow-hidden" 
           style={{
             position: 'absolute',
             top: 0,
@@ -781,6 +784,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             bottom: 0,
             width: '100%',
             height: '100%',
+            borderRadius: '9999px',
+            clipPath: 'inset(0 round 9999px)',
+            WebkitClipPath: 'inset(0 round 9999px)',
+            isolation: 'isolate',
             zIndex: 35,
             pointerEvents: 'none',
           }}
@@ -795,8 +802,9 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             const u = deltaX / bubbleHalfW;
             const absU = Math.abs(u);
 
-            // Skip rendering if outside lens influence for peak mobile GPU efficiency
-            if (absU > 1.25) return null;
+            // Strictly exclude any icon outside or on the lens boundary (|u| >= 1.0)
+            // Completely eliminates ghost halos or premature refraction on adjacent tabs before lens reaches them
+            if (absU >= 1.0) return null;
 
             // Mathematical continuous progression:
             // Starts at MAXIMUM at the corner (u = +/-1.0) and smoothly finishes at ZERO at the center (u = 0.0)
@@ -806,6 +814,9 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
 
             // Core presence factor: 1 at dead center, 0 at corners
             const coreFactor = Math.pow(Math.cos(Math.abs(clampedU) * (Math.PI / 2)), 1.35);
+
+            // Rim fade: smoothly taper refracted icon opacity to 0 right at the meniscus perimeter (0.70 -> 1.0)
+            const rimFade = absU < 0.70 ? 1.0 : Math.cos(((absU - 0.70) / 0.30) * (Math.PI / 2));
 
             // Base scale:
             // Resting: 1.00 (standard factory size)
@@ -847,7 +858,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  opacity: 1, // Naturally clipped by lens capsule overflow-hidden with zero blur dip
+                  opacity: rimFade,
                   pointerEvents: 'none',
                   boxSizing: 'border-box',
                 }}

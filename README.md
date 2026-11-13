@@ -14,9 +14,10 @@
 
 ## 🚀 Live Demo & Interactive Studio
 
-Experience the real-time physical ray-tracing in your browser:
+Experience the real-time physical ray-tracing directly in your browser:
 
-- **Local Development**: `http://localhost:5173/`
+- **Live Interactive Demo**: **[mr-pr0g.github.io/LiquidGlass](https://mr-pr0g.github.io/LiquidGlass/)**
+- **NPM Package**: **[@mr-prog/liquid-glass](https://www.npmjs.com/package/@mr-prog/liquid-glass)**
 - **Zero Runtime Dependencies**: Pure WebGL2 GLSL 300es shaders running at native 60–120 FPS.
 - **Dynamic Backgrounds**: Test refraction against high-contrast diagonal ribbons, typography inertia scroll, and kinetic 3D physics shapes.
 - **Instant Code Export**: Generate standalone single-file HTML or production React/TSX modules with one click.

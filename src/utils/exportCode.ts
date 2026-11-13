@@ -157,8 +157,8 @@ ${innerHtml}
 /* Reusable Glass Capsule Container */
 .liquid-glass-capsule {
   position: relative;
-  width: min(92vw, ${config.width}px);
-  height: ${config.height}px;
+  width: min(92vw, ${config.width ?? 540}px);
+  height: ${config.height ?? 82}px;
   border-radius: ${radiusCss};
   background-color: ${tintRgbaCss};
   border: 1px solid rgba(255, 255, 255, ${borderOpacityVal});
@@ -553,7 +553,9 @@ function createSnellRenderer(canvas, opt) {
       vec2 target = exitXY + outward.xy * projT;
       vec2 shift = target - p;
 
-      float bevelTransition = smoothstep(1.0, 0.82, inset);
+      float coreFade = 1.0 - smoothstep(0.65, 0.98, inset);
+      float rimEntry = smoothstep(0.0, 0.08, inset);
+      float bevelTransition = rimEntry * coreFade;
       shift *= bevelTransition;
       float shiftMagnitude = length(shift);
       if (shiftMagnitude > 0.16) {
@@ -694,10 +696,10 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
   const container = document.querySelector(containerSelector);
   if (!container) return null;
 
-  const trackCanvas = container.querySelector('#liquid-glass-canvas');
-  const lens = container.querySelector('#liquid-nav-lens');
-  const lensCanvas = lens ? lens.querySelector('#liquid-lens-canvas') : null;
-  const refractedContainer = lens ? lens.querySelector('#liquid-lens-refracted') : null;
+  const trackCanvas = container.querySelector('.liquid-glass-canvas') || container.querySelector('#liquid-glass-canvas');
+  const lens = container.querySelector('.liquid-nav-lens') || container.querySelector('#liquid-nav-lens');
+  const lensCanvas = lens ? (lens.querySelector('.liquid-lens-canvas') || lens.querySelector('#liquid-lens-canvas')) : null;
+  const refractedContainer = lens ? (lens.querySelector('.liquid-lens-refracted') || lens.querySelector('#liquid-lens-refracted')) : null;
   const nav = container.querySelector('.liquid-glass-nav');
   const tabs = nav ? Array.from(nav.querySelectorAll('.nav-tab')) : [];
 
@@ -748,7 +750,8 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
   }
 
   let backdropSource = null;
-  let activeTabIdx = 0;
+  const initialActive = tabs.findIndex(t => t.classList.contains('active'));
+  let activeTabIdx = initialActive >= 0 ? initialActive : 0;
   let bubbleCenterX = 0;
   let currentCenterX = 0;
   let targetCenterX = 0;
@@ -759,7 +762,7 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
 
   function getSlotCenter(idx) {
     if (!tabs.length) return 0;
-    const totalW = (nav && nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width});
+    const totalW = (nav && nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width ?? 540});
     const slotW = totalW / tabs.length;
     return (idx + 0.5) * slotW;
   }
@@ -775,7 +778,7 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
       if (lensRenderer && backdropSource) lensRenderer.render(lensRect);
 
       const tabCount = tabs.length;
-      const trackWidth = (nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width});
+      const trackWidth = (nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width ?? 540});
       const slotWidth = trackWidth / tabCount;
       const bubbleHalfW = (lens.offsetWidth > 0) ? lens.offsetWidth / 2 : restingWidth / 2;
 
@@ -918,6 +921,7 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
         updateOptics(currentCenterX);
       }
     },
+    snapToTab,
     render() {
       updateOptics(currentCenterX);
     },
@@ -1290,7 +1294,7 @@ import '@mr-prog/liquid-glass/liquid-glass.css';`;
   shadowStep={${shadowStepVal}}
   isShadowInverted={${isShadowInverted}}
   borderOpacity={${borderOpacityVal}}${borderGradient ? `\n  borderGradient="${borderGradient}"` : ''}
-  style={{ width: 'min(90vw, ${config.width}px)', height: '${config.height}px' }}
+  style={{ width: 'min(90vw, ${config.width ?? 540}px)', height: '${config.height ?? 82}px' }}
 />`;
 
   const fullComponentCode = `import React from 'react';
@@ -1320,7 +1324,7 @@ export default function LiquidGlassShowcase() {
         shadowStep={${shadowStepVal}}
         isShadowInverted={${isShadowInverted}}
         borderOpacity={${borderOpacityVal}}${borderGradient ? `\n        borderGradient="${borderGradient}"` : ''}
-        style={{ width: 'min(90vw, ${config.width}px)', height: '${config.height}px' }}
+        style={{ width: 'min(90vw, ${config.width ?? 540}px)', height: '${config.height ?? 82}px' }}
       />
     </div>
   );

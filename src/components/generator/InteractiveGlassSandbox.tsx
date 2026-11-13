@@ -1689,7 +1689,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     boxSizing: 'border-box',
-                    padding: '0 20px',
+                    padding: '0 clamp(16px, 3vw, 24px)',
                   }}
                 >
                   {/* Left: Track Info with Dynamic Equalizer Bars */}
@@ -1697,7 +1697,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
+                      gap: 'clamp(12px, 2vw, 16px)',
                       minWidth: 0,
                       flex: '1 1 auto',
                     }}
@@ -1705,8 +1705,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                     {/* Glowing Frosted Music Disc */}
                     <div 
                       style={{
-                        width: '38px',
-                        height: '38px',
+                        width: 'clamp(42px, 5.2vw, 48px)',
+                        height: 'clamp(42px, 5.2vw, 48px)',
                         borderRadius: '50%',
                         background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35))',
                         border: '1px solid rgba(255, 255, 255, 0.25)',
@@ -1719,11 +1719,11 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       }}
                     >
                       {/* Dynamic 3-Bar Equalizer Waveform */}
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2.5px', height: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '16px' }}>
                         <span 
                           style={{
-                            width: '3px',
-                            height: isPlayingAudio ? '14px' : '6px',
+                            width: '3.5px',
+                            height: isPlayingAudio ? '16px' : '6px',
                             borderRadius: '2px',
                             backgroundColor: '#22d3ee',
                             animation: isPlayingAudio ? 'pulse 800ms ease-in-out infinite alternate' : 'none',
@@ -1732,8 +1732,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                         />
                         <span 
                           style={{
-                            width: '3px',
-                            height: isPlayingAudio ? '10px' : '12px',
+                            width: '3.5px',
+                            height: isPlayingAudio ? '11px' : '12px',
                             borderRadius: '2px',
                             backgroundColor: '#38bdf8',
                             animation: isPlayingAudio ? 'pulse 600ms ease-in-out infinite alternate 150ms' : 'none',
@@ -1742,8 +1742,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                         />
                         <span 
                           style={{
-                            width: '3px',
-                            height: isPlayingAudio ? '13px' : '8px',
+                            width: '3.5px',
+                            height: isPlayingAudio ? '14px' : '8px',
                             borderRadius: '2px',
                             backgroundColor: '#818cf8',
                             animation: isPlayingAudio ? 'pulse 900ms ease-in-out infinite alternate 300ms' : 'none',
@@ -1757,7 +1757,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                       <span 
                         style={{
-                          fontSize: '14px',
+                          fontSize: 'clamp(15px, 2vw, 17px)',
                           fontWeight: 700,
                           letterSpacing: '0.02em',
                           color: '#ffffff',
@@ -1771,7 +1771,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       </span>
                       <span 
                         style={{
-                          fontSize: '11px',
+                          fontSize: 'clamp(11px, 1.3vw, 13px)',
                           fontFamily: 'monospace',
                           color: 'rgba(212, 212, 216, 0.75)',
                           letterSpacing: '0.06em',
@@ -1790,7 +1790,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
+                      gap: 'clamp(8px, 1.5vw, 12px)',
                       flexShrink: 0,
                     }}
                   >
@@ -1799,8 +1799,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       type="button"
                       className="hover:scale-105 active:scale-95"
                       style={{
-                        width: '32px',
-                        height: '32px',
+                        width: 'clamp(34px, 4.4vw, 40px)',
+                        height: 'clamp(34px, 4.4vw, 40px)',
                         borderRadius: '50%',
                         background: 'rgba(255, 255, 255, 0.08)',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -1813,7 +1813,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       }}
                       title="Previous Track"
                     >
-                      <SkipBack size={14} />
+                      <SkipBack size={16} />
                     </button>
 
                     {/* Play / Pause Primary Glass Button */}
@@ -1822,8 +1822,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       onClick={() => setIsPlayingAudio(!isPlayingAudio)}
                       className="hover:scale-105 active:scale-95"
                       style={{
-                        width: '38px',
-                        height: '38px',
+                        width: 'clamp(42px, 5.4vw, 48px)',
+                        height: 'clamp(42px, 5.4vw, 48px)',
                         borderRadius: '50%',
                         background: 'rgba(255, 255, 255, 0.22)',
                         border: '1px solid rgba(255, 255, 255, 0.40)',
@@ -1838,9 +1838,9 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       title={isPlayingAudio ? "Pause" : "Play"}
                     >
                       {isPlayingAudio ? (
-                        <Pause size={16} />
+                        <Pause size={18} />
                       ) : (
-                        <Play size={16} className="fill-white ml-0.5" />
+                        <Play size={18} className="fill-white ml-0.5" />
                       )}
                     </button>
 
@@ -1849,8 +1849,8 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       type="button"
                       className="hover:scale-105 active:scale-95"
                       style={{
-                        width: '32px',
-                        height: '32px',
+                        width: 'clamp(34px, 4.4vw, 40px)',
+                        height: 'clamp(34px, 4.4vw, 40px)',
                         borderRadius: '50%',
                         background: 'rgba(255, 255, 255, 0.08)',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -1863,7 +1863,7 @@ export const InteractiveGlassSandbox: React.FC<InteractiveGlassSandboxProps> = (
                       }}
                       title="Next Track"
                     >
-                      <SkipForward size={14} />
+                      <SkipForward size={16} />
                     </button>
                   </div>
                 </div>

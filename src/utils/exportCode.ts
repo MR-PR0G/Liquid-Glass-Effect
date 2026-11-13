@@ -278,27 +278,28 @@ ${isShadowInverted ? `
   position: absolute;
   top: 50%;
   left: 12.5%;
-  width: 128px;
+  width: 127px;
   height: calc(100% - 16px);
   transform: translate3d(-50%, -50%, 0);
   border-radius: 9999px;
   clip-path: inset(0 round 9999px);
   -webkit-clip-path: inset(0 round 9999px);
   isolation: isolate;
-  background-color: rgba(6, 10, 18, ${lensDarkTintVal});
+  background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: inset 0 1.5px 2px rgba(255, 255, 255, 0.70), inset 0 -1.5px 2px rgba(0, 0, 0, 0.45), 0 8px 22px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1.2px 1.8px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40), 0 4px 14px -1px rgba(0, 0, 0, 0.45);
   cursor: grab;
   z-index: 20;
   overflow: hidden;
   box-sizing: border-box;
   touch-action: none;
   will-change: transform, left;
-  transition: width 320ms cubic-bezier(0.2, 1, 0.3, 1), height 320ms cubic-bezier(0.2, 1, 0.3, 1);
+  transition: width 380ms cubic-bezier(0.22, 1, 0.36, 1), height 380ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 280ms ease;
 }
 
 .liquid-nav-lens:active {
   cursor: grabbing;
+  box-shadow: inset 0 1.5px 2px rgba(255, 255, 255, 0.75), inset 0 -1.5px 2px rgba(0, 0, 0, 0.50), 0 12px 28px -4px rgba(0, 0, 0, 0.65);
 }
 
 .liquid-lens-canvas {
@@ -348,16 +349,22 @@ ${isShadowInverted ? `
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+  color: #ffffff;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85));
   transform-origin: center center;
   will-change: transform;
+}
+.refracted-icon-inner svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
 }
 
 .liquid-lens-specular {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 1.2px 1.8px rgba(255, 255, 255, 0.55), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40);
+  box-shadow: inset 0 1.2px 1.8px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.8px rgba(0, 0, 0, 0.40);
   pointer-events: none;
   z-index: 40;
 }
@@ -367,7 +374,7 @@ ${isShadowInverted ? `
 /* ------------------------------------------------------------- */
 .liquid-glass-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 15px;
+  font-size: clamp(14px, 2.2vw, 18px);
   font-weight: 800;
   letter-spacing: 0.28em;
   color: #f4f4f5;
@@ -382,14 +389,14 @@ ${isShadowInverted ? `
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0 18px;
+  padding: 0 clamp(16px, 3vw, 24px);
   color: #f4f4f5;
   box-sizing: border-box;
 }
-.player-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.player-info { display: flex; align-items: center; gap: clamp(12px, 2vw, 16px); min-width: 0; flex: 1 1 auto; }
 .player-disc {
-  width: 36px;
-  height: 36px;
+  width: clamp(40px, 5.2vw, 46px);
+  height: clamp(40px, 5.2vw, 46px);
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35));
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -397,22 +404,23 @@ ${isShadowInverted ? `
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
 }
-.player-eq { display: flex; align-items: flex-end; gap: 2.5px; height: 14px; }
-.eq-bar { width: 3px; border-radius: 2px; }
-.bar-1 { height: 14px; background-color: #22d3ee; animation: eq-pulse 800ms ease-in-out infinite alternate; }
-.bar-2 { height: 10px; background-color: #38bdf8; animation: eq-pulse 600ms ease-in-out infinite alternate 150ms; }
-.bar-3 { height: 13px; background-color: #818cf8; animation: eq-pulse 900ms ease-in-out infinite alternate 300ms; }
-@keyframes eq-pulse { 0% { height: 4px; } 100% { height: 14px; } }
+.player-eq { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
+.eq-bar { width: 3.5px; border-radius: 2px; }
+.bar-1 { height: 16px; background-color: #22d3ee; animation: eq-pulse 800ms ease-in-out infinite alternate; }
+.bar-2 { height: 11px; background-color: #38bdf8; animation: eq-pulse 600ms ease-in-out infinite alternate 150ms; }
+.bar-3 { height: 14px; background-color: #818cf8; animation: eq-pulse 900ms ease-in-out infinite alternate 300ms; }
+@keyframes eq-pulse { 0% { height: 4px; } 100% { height: 16px; } }
 .player-meta { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.player-title { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-.player-sub { font-size: 11px; font-family: monospace; color: rgba(212, 212, 216, 0.75); letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.player-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.player-title { font-size: clamp(15px, 2vw, 17px); font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.player-sub { font-size: clamp(11px, 1.3vw, 13px); font-family: monospace; color: rgba(212, 212, 216, 0.75); letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-controls { display: flex; align-items: center; gap: clamp(8px, 1.5vw, 12px); flex-shrink: 0; }
 .ctrl-btn { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s ease; }
-.btn-primary { width: 38px; height: 38px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); border: 1px solid rgba(255, 255, 255, 0.40); color: #fff; }
-.btn-primary svg { width: 16px; height: 16px; margin-left: 2px; fill: currentColor; }
-.btn-secondary { width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #e4e4e7; }
-.btn-secondary svg { width: 14px; height: 14px; }
+.btn-primary { width: clamp(42px, 5.4vw, 48px); height: clamp(42px, 5.4vw, 48px); border-radius: 50%; background: rgba(255, 255, 255, 0.22); border: 1px solid rgba(255, 255, 255, 0.40); color: #fff; box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6); }
+.btn-primary svg { width: clamp(18px, 2.2vw, 20px); height: clamp(18px, 2.2vw, 20px); margin-left: 2px; fill: currentColor; }
+.btn-secondary { width: clamp(34px, 4.4vw, 40px); height: clamp(34px, 4.4vw, 40px); border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #e4e4e7; }
+.btn-secondary svg { width: clamp(15px, 1.8vw, 17px); height: clamp(15px, 1.8vw, 17px); }
 .ctrl-btn:hover { transform: scale(1.06); }
 .ctrl-btn:active { transform: scale(0.95); }`;
 
@@ -448,57 +456,127 @@ function createSnellRenderer(canvas, opt) {
     uniform sampler2D uBackdrop;
     uniform bool uHasBackdrop;
     uniform vec2 uScreenSize;
-    uniform vec2 uLensPos;
-    uniform vec2 uLensSize;
-    uniform float uRadius;
-    uniform float uRefraction;
-    uniform float uBevel;
-    uniform float uDispersion;
-    uniform float uDarkTint;
-    uniform float uBlur;
+    uniform vec4 uRect;            // left, top, width, height (device pixels)
+    uniform float uRadius;         // corner radius in pixels
+    uniform float uBevel;          // bevel width in pixels
+    uniform float uRefraction;     // Snell refraction index
+    uniform float uDispersion;     // chromatic dispersion
+    uniform float uDarkTint;       // dark tint factor
+    uniform vec3 uTintColor;       // dark tint RGB
+    uniform float uBlur;           // Gaussian blur level
+    uniform float uReflectivity;   // specular glaze reflection
 
-    float sdRoundedBox(vec2 p, vec2 b, float r) {
-      vec2 q = abs(p) - b + r;
-      return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
+    float squircleProfile(float x) {
+      float r = 1.0 - clamp(x, 0.0, 1.0);
+      return sqrt(sqrt(max(0.0, 1.0 - r * r * r * r)));
     }
 
     void main() {
-      vec2 pixelPos = vUv * uLensSize;
-      vec2 halfSize = uLensSize * 0.5;
-      vec2 p = pixelPos - halfSize;
-      float r = min(uRadius, min(halfSize.x, halfSize.y));
-      float d = sdRoundedBox(p, halfSize, r);
+      float rad = uRect.w * 0.5;
+      vec2 halfExtent = (uRect.zw * 0.5) / rad;
+      vec2 p = vec2((vUv.x - 0.5) * uRect.z, (vUv.y - 0.5) * uRect.w) / rad;
+      float rc = min(uRadius / rad, min(halfExtent.x, halfExtent.y));
 
-      if (d > 0.0) {
+      // Signed distance function of squircle box in units of rad
+      vec2 q = abs(p) - halfExtent + rc;
+      float sdf = min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - rc;
+
+      float pixel = 1.0 / rad;
+      float coverage = clamp(0.5 - sdf / pixel, 0.0, 1.0);
+      if (coverage <= 0.0) {
         fragColor = vec4(0.0);
         return;
       }
 
       if (!uHasBackdrop) {
-        fragColor = vec4(0.0);
+        fragColor = vec4(uTintColor * uDarkTint, coverage * uDarkTint);
         return;
       }
 
-      float distInward = -d;
+      // Analytical gradient
+      vec2 e = vec2(pixel * 0.75, 0.0);
+      vec2 grad = vec2(
+        (min(max(abs(p + e.xy) - halfExtent + rc, 0.0).x, max(abs(p + e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(p + e.xy) - halfExtent + rc, 0.0)) - rc) -
+        (min(max(abs(p - e.xy) - halfExtent + rc, 0.0).x, max(abs(p - e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(p - e.xy) - halfExtent + rc, 0.0)) - rc),
+        (min(max(abs(p + e.yx) - halfExtent + rc, 0.0).x, max(abs(p + e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(p + e.yx) - halfExtent + rc, 0.0)) - rc) -
+        (min(max(abs(p - e.yx) - halfExtent + rc, 0.0).x, max(abs(p - e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(p - e.yx) - halfExtent + rc, 0.0)) - rc)
+      );
+      grad /= max(length(grad), 1e-5);
 
-      vec2 grad = normalize(vec2(
-        sdRoundedBox(p + vec2(1.0, 0.0), halfSize, r) - sdRoundedBox(p - vec2(1.0, 0.0), halfSize, r),
-        sdRoundedBox(p + vec2(0.0, 1.0), halfSize, r) - sdRoundedBox(p - vec2(0.0, 1.0), halfSize, r)
-      ));
+      float bevelW = clamp(uBevel / rad, 0.04, min(rc, 1.0));
+      float inset = clamp(-sdf / bevelW, 0.0, 1.0);
 
-      float bevelWidth = clamp(uBevel, 4.0, min(halfSize.y * 0.95, 48.0));
-      float t = clamp(distInward / bevelWidth, 0.0, 1.0);
-      float slope = cos(t * 1.5707963) * (1.0 - t);
+      float lift = bevelW * squircleProfile(inset);
+      float delta = 0.002;
+      float slope = (squircleProfile(inset + delta) - squircleProfile(max(inset - delta, 0.0))) / 0.004;
+      vec3 frontNormal = normalize(vec3(grad * slope, 1.0));
+      vec3 frontPoint = vec3(p, lift);
+      vec3 view = vec3(0.0, 0.0, -1.0);
 
-      vec2 refractDisp = -grad * slope * (uRefraction * 42.0);
+      float eta = 1.0 + 0.333 * uRefraction + 0.25;
+      vec2 exitXY = p;
+      vec3 outward = view;
+      float exitZ = -lift;
 
-      vec2 screenUv = (uLensPos + pixelPos) / uScreenSize;
-      screenUv.y = 1.0 - screenUv.y;
+      if (eta > 1.0003 && inset < 0.999) {
+        vec3 ray = refract(view, frontNormal, 1.0 / eta);
+        float nearT = 0.0;
+        float farT = (lift + 1.0) / max(-ray.z, 0.05);
+        for (int i = 0; i < 8; i++) {
+          float midT = 0.5 * (nearT + farT);
+          vec3 x = frontPoint + ray * midT;
+          vec2 qX = abs(x.xy) - halfExtent + rc;
+          float sdBack = min(max(qX.x, qX.y), 0.0) + length(max(qX, 0.0)) - rc;
+          float backLift = bevelW * squircleProfile(clamp(-sdBack / bevelW, 0.0, 1.0));
+          if (x.z > -backLift && sdBack < 0.0) nearT = midT; else farT = midT;
+        }
+        vec3 xExit = frontPoint + ray * nearT;
+        exitXY = xExit.xy;
+        exitZ = xExit.z;
 
-      float disp = uDispersion * 0.45;
-      vec2 uvR = screenUv + (refractDisp * (1.0 - disp)) / uScreenSize;
-      vec2 uvG = screenUv + refractDisp / uScreenSize;
-      vec2 uvB = screenUv + (refractDisp * (1.0 + disp)) / uScreenSize;
+        vec2 qExit = abs(xExit.xy) - halfExtent + rc;
+        vec2 exitGrad = vec2(
+          (min(max(abs(xExit.xy + e.xy) - halfExtent + rc, 0.0).x, max(abs(xExit.xy + e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy + e.xy) - halfExtent + rc, 0.0)) - rc) -
+          (min(max(abs(xExit.xy - e.xy) - halfExtent + rc, 0.0).x, max(abs(xExit.xy - e.xy) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy - e.xy) - halfExtent + rc, 0.0)) - rc),
+          (min(max(abs(xExit.xy + e.yx) - halfExtent + rc, 0.0).x, max(abs(xExit.xy + e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy + e.yx) - halfExtent + rc, 0.0)) - rc) -
+          (min(max(abs(xExit.xy - e.yx) - halfExtent + rc, 0.0).x, max(abs(xExit.xy - e.yx) - halfExtent + rc, 0.0).y) + length(max(abs(xExit.xy - e.yx) - halfExtent + rc, 0.0)) - rc)
+        );
+        exitGrad /= max(length(exitGrad), 1e-5);
+        float exitInset = clamp(-(min(max(qExit.x, qExit.y), 0.0) + length(max(qExit, 0.0)) - rc) / bevelW, 0.0, 1.0);
+        float exitSlope = (squircleProfile(exitInset + delta) - squircleProfile(max(exitInset - delta, 0.0))) / 0.004;
+        vec3 exitNormal = normalize(vec3(exitGrad * exitSlope, -1.0));
+        outward = refract(ray, -exitNormal, eta);
+        if (dot(outward, outward) < 1e-4) outward = ray;
+      }
+
+      float projT = (-1.3 - exitZ) / min(outward.z, -0.05);
+      vec2 target = exitXY + outward.xy * projT;
+      vec2 shift = target - p;
+
+      float bevelTransition = smoothstep(1.0, 0.82, inset);
+      shift *= bevelTransition;
+      float shiftMagnitude = length(shift);
+      if (shiftMagnitude > 0.16) {
+        shift = (shift / shiftMagnitude) * 0.16;
+      }
+      target = p + shift;
+
+      vec2 originUv = vec2(uRect.x + uRect.z * 0.5, uScreenSize.y - (uRect.y + uRect.w * 0.5)) / uScreenSize;
+      vec2 scaleUv = vec2(rad) / uScreenSize;
+      vec2 uvG = originUv + target * scaleUv;
+
+      float split = 0.75 * uDispersion;
+      float shiftLen = length(shift);
+      vec2 uvR = uvG;
+      vec2 uvB = uvG;
+      if (split > 0.01 && shiftLen > 1e-4) {
+        vec2 shiftDir = shift / shiftLen;
+        float dispOffset = split * (shiftLen * 0.75 + 0.015 * bevelTransition);
+        vec2 targetR = p + shift - shiftDir * dispOffset;
+        vec2 targetB = p + shift + shiftDir * dispOffset;
+        uvR = originUv + targetR * scaleUv;
+        uvB = originUv + targetB * scaleUv;
+      }
 
       vec3 color = vec3(
         texture(uBackdrop, clamp(uvR, 0.0, 1.0)).r,
@@ -506,23 +584,25 @@ function createSnellRenderer(canvas, opt) {
         texture(uBackdrop, clamp(uvB, 0.0, 1.0)).b
       );
 
-      if (uBlur > 0.1) {
-        float bStep = (uBlur * 0.35 + 0.3) * 0.0022;
-        vec3 blurred = color * 0.24;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(bStep, 0.0), 0.0, 1.0)).rgb * 0.14;
-        blurred += texture(uBackdrop, clamp(uvG - vec2(bStep, 0.0), 0.0, 1.0)).rgb * 0.14;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(0.0, bStep), 0.0, 1.0)).rgb * 0.14;
-        blurred += texture(uBackdrop, clamp(uvG - vec2(0.0, bStep), 0.0, 1.0)).rgb * 0.14;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(bStep * 0.707, bStep * 0.707), 0.0, 1.0)).rgb * 0.05;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(-bStep * 0.707, bStep * 0.707), 0.0, 1.0)).rgb * 0.05;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(bStep * 0.707, -bStep * 0.707), 0.0, 1.0)).rgb * 0.05;
-        blurred += texture(uBackdrop, clamp(uvG + vec2(-bStep * 0.707, -bStep * 0.707), 0.0, 1.0)).rgb * 0.05;
+      if (uBlur > 0.05) {
+        vec2 bStep = vec2(uBlur * 0.35 + 0.3) / uScreenSize;
+        vec3 blurred = color * 0.36;
+        blurred += texture(uBackdrop, clamp(uvG + vec2(bStep.x, 0.0), 0.0, 1.0)).rgb * 0.16;
+        blurred += texture(uBackdrop, clamp(uvG - vec2(bStep.x, 0.0), 0.0, 1.0)).rgb * 0.16;
+        blurred += texture(uBackdrop, clamp(uvG + vec2(0.0, bStep.y), 0.0, 1.0)).rgb * 0.16;
+        blurred += texture(uBackdrop, clamp(uvG - vec2(0.0, bStep.y), 0.0, 1.0)).rgb * 0.16;
         color = blurred;
       }
 
-      color = mix(color, vec3(0.0), uDarkTint);
-      float edgeAlpha = clamp(distInward + 0.5, 0.0, 1.0);
-      fragColor = vec4(color, edgeAlpha);
+      float cosI = max(frontNormal.z, 0.0);
+      float topGlaze = pow(max(grad.y - 0.2, 0.0), 2.2) * pow(1.0 - cosI, 2.0) * 0.15 * uReflectivity;
+      color += vec3(1.0) * topGlaze;
+
+      if (uDarkTint > 0.001) {
+        color = mix(color, uTintColor, uDarkTint);
+      }
+
+      fragColor = vec4(color, coverage);
     }
   \`;
 
@@ -553,14 +633,15 @@ function createSnellRenderer(canvas, opt) {
     uBackdrop: gl.getUniformLocation(prog, 'uBackdrop'),
     uHasBackdrop: gl.getUniformLocation(prog, 'uHasBackdrop'),
     uScreenSize: gl.getUniformLocation(prog, 'uScreenSize'),
-    uLensPos: gl.getUniformLocation(prog, 'uLensPos'),
-    uLensSize: gl.getUniformLocation(prog, 'uLensSize'),
+    uRect: gl.getUniformLocation(prog, 'uRect'),
     uRadius: gl.getUniformLocation(prog, 'uRadius'),
     uRefraction: gl.getUniformLocation(prog, 'uRefraction'),
     uBevel: gl.getUniformLocation(prog, 'uBevel'),
     uDispersion: gl.getUniformLocation(prog, 'uDispersion'),
     uDarkTint: gl.getUniformLocation(prog, 'uDarkTint'),
+    uTintColor: gl.getUniformLocation(prog, 'uTintColor'),
     uBlur: gl.getUniformLocation(prog, 'uBlur'),
+    uReflectivity: gl.getUniformLocation(prog, 'uReflectivity'),
   };
 
   let hasSource = false;
@@ -583,14 +664,15 @@ function createSnellRenderer(canvas, opt) {
       gl.useProgram(prog);
       gl.uniform1i(locs.uHasBackdrop, hasSource ? 1 : 0);
       gl.uniform2f(locs.uScreenSize, window.innerWidth, window.innerHeight);
-      gl.uniform2f(locs.uLensPos, rect.left, rect.top);
-      gl.uniform2f(locs.uLensSize, rect.width, rect.height);
+      gl.uniform4f(locs.uRect, rect.left, rect.top, rect.width, rect.height);
       gl.uniform1f(locs.uRadius, opt.radius ?? 9999);
       gl.uniform1f(locs.uRefraction, opt.refraction ?? ${computedRefraction});
       gl.uniform1f(locs.uBevel, opt.bevel ?? ${computedBevel});
       gl.uniform1f(locs.uDispersion, opt.dispersion ?? ${dispersionVal});
-      gl.uniform1f(locs.uDarkTint, opt.darkTint ?? ${darkTintVal});
+      gl.uniform1f(locs.uDarkTint, opt.darkTint ?? 0.0);
+      gl.uniform3f(locs.uTintColor, ${tintR / 255}, ${tintG / 255}, ${tintB / 255});
       gl.uniform1f(locs.uBlur, opt.blur ?? ${blurVal});
+      gl.uniform1f(locs.uReflectivity, opt.reflectivity ?? 0.65);
 
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -619,21 +701,31 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
   const nav = container.querySelector('.liquid-glass-nav');
   const tabs = nav ? Array.from(nav.querySelectorAll('.nav-tab')) : [];
 
+  const rawH = container.offsetHeight || ${config.height};
+  const restingHeight = Math.max(36, rawH - 16);
+  const restingWidth = Math.round(restingHeight * 1.67);
+  if (lens) {
+    lens.style.height = restingHeight + 'px';
+    lens.style.width = restingWidth + 'px';
+  }
+
   const trackRenderer = trackCanvas ? createSnellRenderer(trackCanvas, {
     refraction: ${computedRefraction},
     bevel: ${computedBevel},
     dispersion: ${dispersionVal},
-    darkTint: ${darkTintVal},
+    darkTint: 0.0,
     blur: ${blurVal},
+    reflectivity: 0.65,
     radius: ${topRadiusVal}
   }) : null;
 
   const lensRenderer = lensCanvas ? createSnellRenderer(lensCanvas, {
     refraction: (${computedRefraction} * 1.25),
-    bevel: ${computedBevel},
-    dispersion: ${dispersionVal},
-    darkTint: ${lensDarkTintVal},
+    bevel: Math.round(restingHeight * 0.42),
+    dispersion: 0.0,
+    darkTint: 0.0,
     blur: ${blurVal},
+    reflectivity: 0.0,
     radius: 9999
   }) : null;
 
@@ -665,6 +757,13 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
   let dragStartCenterX = 0;
   let animId = null;
 
+  function getSlotCenter(idx) {
+    if (!tabs.length) return 0;
+    const totalW = (nav && nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width});
+    const slotW = totalW / tabs.length;
+    return (idx + 0.5) * slotW;
+  }
+
   function updateOptics(centerX) {
     currentCenterX = centerX;
     const trackRect = container.getBoundingClientRect();
@@ -676,9 +775,9 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
       if (lensRenderer && backdropSource) lensRenderer.render(lensRect);
 
       const tabCount = tabs.length;
-      const trackWidth = nav.offsetWidth;
+      const trackWidth = (nav.offsetWidth > 0) ? nav.offsetWidth : (container.offsetWidth || ${config.width});
       const slotWidth = trackWidth / tabCount;
-      const bubbleHalfW = lens.offsetWidth / 2;
+      const bubbleHalfW = (lens.offsetWidth > 0) ? lens.offsetWidth / 2 : restingWidth / 2;
 
       for (let i = 0; i < tabCount; i++) {
         const iconCenterX = (i + 0.5) * slotWidth;
@@ -686,10 +785,10 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
         const u = bubbleHalfW > 0 ? deltaX / bubbleHalfW : 0;
         const absU = Math.abs(u);
 
-        // 1. Base track icon yields smoothly
+        // 1. Base track icon yields smoothly under the lens
         const baseTab = tabs[i];
-        const baseOpacity = absU >= 1.0 ? 1.0 : Math.max(0, Math.pow(Math.max(0, (absU - 0.15) / 0.85), 1.6));
-        baseTab.style.opacity = baseOpacity.toFixed(3);
+        const baseOpacity = absU >= 0.85 ? 1.0 : Math.max(0, Math.pow(Math.max(0, (absU - 0.20) / 0.65), 1.5));
+        baseTab.style.opacity = (absU < 0.28 ? 0 : baseOpacity).toFixed(3);
         baseTab.style.transform = \`scale(\${(0.88 + 0.12 * Math.min(1, absU)).toFixed(3)})\`;
 
         // 2. Refracted icon with physical spherical dome curvature
@@ -708,12 +807,12 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
           const edgeFactor = Math.pow(Math.abs(clampedU), 1.20);
           const rimFade = absU < 0.70 ? 1.0 : Math.cos(((absU - 0.70) / 0.30) * (Math.PI / 2));
 
-          const microStretchX = 1.0 + edgeFactor * 0.20;
-          const microCompressY = 1.0 - edgeFactor * 0.07;
-          const microPullX = signedEdge * 3.5;
-          const domeCurvatureY = -edgeFactor * 11.0;
-          const domeCurvatureX = signedEdge * 12.0;
-          const microSkewX = -signedEdge * 5.5;
+          const microStretchX = 1.0 + edgeFactor * 0.16;
+          const microCompressY = 1.0 - edgeFactor * 0.06;
+          const microPullX = signedEdge * 2.8;
+          const domeCurvatureY = -edgeFactor * 8.0;
+          const domeCurvatureX = signedEdge * 9.0;
+          const microSkewX = -signedEdge * 4.0;
 
           refrSlot.style.opacity = rimFade.toFixed(3);
           const inner = refrSlot.firstElementChild;
@@ -723,12 +822,6 @@ function initLiquidGlass(containerSelector = '#liquid-glass-capsule') {
         }
       }
     }
-  }
-
-  function getSlotCenter(idx) {
-    if (!nav || !tabs.length) return 0;
-    const slotW = nav.offsetWidth / tabs.length;
-    return (idx + 0.5) * slotW;
   }
 
   function snapToTab(idx, duration = 380) {
@@ -991,10 +1084,10 @@ ${js}
       const mode = patterns[currentPatternIdx];
 
       if (mode === 'stripes') {
-        const colors = ['#ec4899', '#94a3b8', '#2563eb', '#06070b'];
-        const stripeW = 44;
+        const colors = ['#ec4899', '#94a3b8', '#2563eb', '#07080d'];
+        const stripeW = 32;
         const period = stripeW * colors.length;
-        backdropCtx.fillStyle = '#06070b';
+        backdropCtx.fillStyle = '#07080d';
         backdropCtx.fillRect(0, 0, w, h);
 
         const totalSteps = Math.ceil((h * 2 + period * 4) / stripeW);
@@ -1004,30 +1097,41 @@ ${js}
           backdropCtx.fillStyle = colors[step % colors.length];
           backdropCtx.beginPath();
           backdropCtx.moveTo(0, i);
-          backdropCtx.lineTo(w, i + w);
-          backdropCtx.lineTo(w, i + w + stripeW);
+          backdropCtx.lineTo(w, i + w * 0.75);
+          backdropCtx.lineTo(w, i + w * 0.75 + stripeW);
           backdropCtx.lineTo(0, i + stripeW);
           backdropCtx.closePath();
           backdropCtx.fill();
         }
       } else if (mode === 'cross') {
-        backdropCtx.fillStyle = '#08080c';
+        const bandW = 46;
+        const period = bandW * 2;
+        backdropCtx.fillStyle = '#05060a';
         backdropCtx.fillRect(0, 0, w, h);
 
-        const cx = w / 2;
-        const cy = h / 2;
-        const crossW = Math.max(70, Math.round(w * 0.14));
-
         backdropCtx.fillStyle = '#2563eb';
-        backdropCtx.fillRect(0, cy - crossW / 2, w, crossW);
-        backdropCtx.fillRect(cx - crossW / 2, 0, crossW, h);
+        for (let i = -h; i < h + period * 2; i += period) {
+          backdropCtx.beginPath();
+          backdropCtx.moveTo(0, i);
+          backdropCtx.lineTo(w, i + w * 0.75);
+          backdropCtx.lineTo(w, i + w * 0.75 + bandW);
+          backdropCtx.lineTo(0, i + bandW);
+          backdropCtx.closePath();
+          backdropCtx.fill();
+        }
 
-        backdropCtx.fillStyle = '#ffffff';
-        backdropCtx.font = '900 clamp(36px, 8vw, 84px) sans-serif';
-        backdropCtx.textAlign = 'center';
-        backdropCtx.textBaseline = 'middle';
-        backdropCtx.fillText('REFRACTED', cx, cy - crossW);
-        backdropCtx.fillText('OPTICS', cx, cy + crossW);
+        backdropCtx.globalCompositeOperation = 'screen';
+        backdropCtx.fillStyle = 'rgba(37, 99, 235, 0.72)';
+        for (let i = -h; i < h + period * 2; i += period) {
+          backdropCtx.beginPath();
+          backdropCtx.moveTo(w, i);
+          backdropCtx.lineTo(0, i + w * 0.75);
+          backdropCtx.lineTo(0, i + w * 0.75 + bandW);
+          backdropCtx.lineTo(w, i + bandW);
+          backdropCtx.closePath();
+          backdropCtx.fill();
+        }
+        backdropCtx.globalCompositeOperation = 'source-over';
       } else if (mode === 'typography') {
         backdropCtx.fillStyle = '#05070d';
         backdropCtx.fillRect(0, 0, w, h);

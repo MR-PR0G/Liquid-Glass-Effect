@@ -559,7 +559,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
             alignItems: 'center',
             justifyContent: 'space-between',
             boxSizing: 'border-box',
-            padding: '0 20px',
+            padding: '0 clamp(16px, 3vw, 24px)',
           }}
         >
           {/* Left: Track Info with Dynamic Equalizer Bars */}
@@ -567,7 +567,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: 'clamp(12px, 2vw, 16px)',
               minWidth: 0,
               flex: '1 1 auto',
             }}
@@ -575,8 +575,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
             {/* Glowing Frosted Music Disc */}
             <div 
               style={{
-                width: '38px',
-                height: '38px',
+                width: 'clamp(42px, 5.2vw, 48px)',
+                height: 'clamp(42px, 5.2vw, 48px)',
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(59, 130, 246, 0.35))',
                 border: '1px solid rgba(255, 255, 255, 0.25)',
@@ -589,11 +589,11 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               }}
             >
               {/* Dynamic 3-Bar Equalizer Waveform */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2.5px', height: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '16px' }}>
                 <span 
                   style={{
-                    width: '3px',
-                    height: isPlaying ? '14px' : '6px',
+                    width: '3.5px',
+                    height: isPlaying ? '16px' : '6px',
                     borderRadius: '2px',
                     backgroundColor: '#22d3ee',
                     animation: isPlaying ? 'pulse 800ms ease-in-out infinite alternate' : 'none',
@@ -602,8 +602,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
                 />
                 <span 
                   style={{
-                    width: '3px',
-                    height: isPlaying ? '10px' : '12px',
+                    width: '3.5px',
+                    height: isPlaying ? '11px' : '12px',
                     borderRadius: '2px',
                     backgroundColor: '#38bdf8',
                     animation: isPlaying ? 'pulse 600ms ease-in-out infinite alternate 150ms' : 'none',
@@ -612,8 +612,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
                 />
                 <span 
                   style={{
-                    width: '3px',
-                    height: isPlaying ? '13px' : '8px',
+                    width: '3.5px',
+                    height: isPlaying ? '14px' : '8px',
                     borderRadius: '2px',
                     backgroundColor: '#818cf8',
                     animation: isPlaying ? 'pulse 900ms ease-in-out infinite alternate 300ms' : 'none',
@@ -627,7 +627,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
               <span 
                 style={{
-                  fontSize: '14px',
+                  fontSize: 'clamp(15px, 2vw, 17px)',
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                   color: '#ffffff',
@@ -641,7 +641,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               </span>
               <span 
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'clamp(11px, 1.3vw, 13px)',
                   fontFamily: 'monospace',
                   color: 'rgba(212, 212, 216, 0.75)',
                   letterSpacing: '0.06em',
@@ -660,7 +660,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: 'clamp(8px, 1.5vw, 12px)',
               flexShrink: 0,
             }}
           >
@@ -672,8 +672,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
                 onPrevTrack?.();
               }}
               style={{
-                width: '32px',
-                height: '32px',
+                width: 'clamp(34px, 4.4vw, 40px)',
+                height: 'clamp(34px, 4.4vw, 40px)',
                 borderRadius: '50%',
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -686,7 +686,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               }}
               title="Previous Track"
             >
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="19 20 9 12 19 4 19 20"/>
                 <line x1="5" y1="19" x2="5" y2="5"/>
               </svg>
@@ -701,8 +701,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
                 onPlayToggle?.();
               }}
               style={{
-                width: '38px',
-                height: '38px',
+                width: 'clamp(42px, 5.4vw, 48px)',
+                height: 'clamp(42px, 5.4vw, 48px)',
                 borderRadius: '50%',
                 background: 'rgba(255, 255, 255, 0.22)',
                 border: '1px solid rgba(255, 255, 255, 0.40)',
@@ -717,12 +717,12 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16" rx="1.5"/>
                   <rect x="14" y="4" width="4" height="16" rx="1.5"/>
                 </svg>
               ) : (
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
               )}
@@ -736,8 +736,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
                 onNextTrack?.();
               }}
               style={{
-                width: '32px',
-                height: '32px',
+                width: 'clamp(34px, 4.4vw, 40px)',
+                height: 'clamp(34px, 4.4vw, 40px)',
                 borderRadius: '50%',
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -750,7 +750,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(({
               }}
               title="Next Track"
             >
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 4 15 12 5 20 5 4"/>
                 <line x1="19" y1="5" x2="19" y2="19"/>
               </svg>

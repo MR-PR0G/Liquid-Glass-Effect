@@ -1,142 +1,70 @@
+<div align="center">
+
 # Liquid Glass Effect
 
+### Next-Generation Optical Physics Engine for React
+
+The liquid glass UI engine web developers have been waiting for.  
+Simulates physically-accurate **Snell's law refraction**, **chromatic dispersion** along curved meniscus rims, and **crystal-clear flat transmission** at 120 FPS.
+
+<br />
+
+[![npm version](https://img.shields.io/npm/v/@mr-prog/liquid-glass?style=for-the-badge&color=06b6d4&labelColor=09090b)](https://www.npmjs.com/package/@mr-prog/liquid-glass)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=09090b)](https://opensource.org/licenses/MIT)
+[![Optics: Snell's Law](https://img.shields.io/badge/Optics-Snell's%20Law-8b5cf6?style=for-the-badge&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
+[![WebGL 2.0](https://img.shields.io/badge/WebGL-2.0%20GPU-ec4899?style=for-the-badge&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
+[![120 FPS](https://img.shields.io/badge/Performance-120%20FPS-10b981?style=for-the-badge&labelColor=09090b)](https://mr-pr0g.github.io/LiquidGlass/)
+
+<br />
+
+**[🚀 Live Interactive Studio](https://mr-pr0g.github.io/LiquidGlass/)** &bull; **[📦 NPM Package](https://www.npmjs.com/package/@mr-prog/liquid-glass)** &bull; **[📖 Quick Start](#-quick-start)**
+
+<br />
+
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-0.2.7-white?style=for-the-badge&labelColor=black" alt="Version 0.2.7" />
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge&labelColor=black" alt="MIT License" />
-  <img src="https://img.shields.io/badge/Optics-Snell's%20Law-cyan?style=for-the-badge&labelColor=black" alt="Snell's Law" />
-  <img src="https://img.shields.io/badge/WebGL-2.0%20GLSL%20300es-indigo?style=for-the-badge&labelColor=black" alt="WebGL 2.0" />
-  <img src="https://img.shields.io/badge/Performance-120%20FPS-emerald?style=for-the-badge&labelColor=black" alt="120 FPS" />
+  <img src="demo/hero-preview.png" alt="Liquid Glass Optical Physics Engine Preview" width="850" style="border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);" />
 </p>
 
-> An experimental physical optics studio and zero-dependency code generator for **Liquid Glass Effect**. Simulates real-time Snell's law ray-tracing, chromatic dispersion, and parametric meniscus bevels with zero distortion in the transmission core. Built with love by **[MR PROG](https://github.com/MR-PR0G)** &bull; Official Repository: **[MR-PR0G/LiquidGlass](https://github.com/MR-PR0G/LiquidGlass)**.
-
----
-
-## 🚀 Live Demo & Interactive Studio
-
-Experience the real-time physical ray-tracing directly in your browser:
-
-- **Live Interactive Demo**: **[mr-pr0g.github.io/LiquidGlass](https://mr-pr0g.github.io/LiquidGlass/)**
-- **NPM Package**: **[@mr-prog/liquid-glass](https://www.npmjs.com/package/@mr-prog/liquid-glass)**
-- **Zero Runtime Dependencies**: Pure WebGL2 GLSL 300es shaders running at native 60–120 FPS.
-- **Dynamic Backgrounds**: Test refraction against high-contrast diagonal ribbons, typography inertia scroll, and kinetic 3D physics shapes.
-- **Instant Code Export**: Generate standalone single-file HTML or production React/TSX modules with one click.
-
----
-
-## 💎 Features
-
-- **Physically-Accurate Snell Ray-Tracing**: Vector refraction calculated per fragment via $n_1 \sin\theta_1 = n_2 \sin\theta_2$.
-- **Parametric Meniscus Edge Bevel**: Refraction is concentrated along curved rims while preserving 100% distortion-free transmission through the core face (zero pinwheel artifacts at rounded corners).
-- **Spectral Chromatic Dispersion ($\Delta\lambda$)**: Prismatic RGB wavelength splitting along high-curvature bevel borders.
-- **Smoked Dark Tinting**: Translucent optical absorption layer customizable from crystal-clear to deep obsidian.
-- **Zero External Dependencies**: Standalone HTML and React components run with pure WebGL2 and zero external library bloat.
-- **Drag-Anywhere Physics**: Inspect background distortions smoothly across any point on desktop or mobile touch devices.
-
----
-
-## 🔬 Optical Physics Formulation
-
-Traditional CSS glassmorphism relies solely on uniform Gaussian blur, which produces flat, cloudy surfaces without realistic depth. **LIQUID GLASS GENERATOR** computes real-time Snell's law refraction vectors along the curved liquid meniscus bevel of any element:
-
-$$n_1 \cdot \sin(\theta_1) = n_2 \cdot \sin(\theta_2)$$
-
-### Flat Core Transmission & Meniscus Bevel
-
-Light rays entering perpendicular to a flat glass surface experience zero lateral deflection. Therefore, the **interior core** of the Liquid Glass remains optically flat and undistorted, while refraction occurs exclusively along the **parametric meniscus bevel**:
-
-$$\vec{N} = \text{normalize}\left(-\nabla \text{SDF} \cdot \cos\left(t \cdot \frac{\pi}{2}\right) \cdot (1 - t) \cdot \eta, \; 1.0\right)$$
-
-Where $t \in [0, 1]$ represents normalized distance from the outer perimeter to the inner flat face.
-
-### Chromatic Dispersion ($\Delta\lambda$)
-
-Wavelengths split across red, green, and blue indices of refraction:
-
-$$\eta_{\text{green}} = \frac{1.0}{1.0 + \text{refraction}}$$
-$$\eta_{\text{red}} = \eta_{\text{green}} \cdot (1.0 - \text{dispersion} \cdot 0.35)$$
-$$\eta_{\text{blue}} = \eta_{\text{green}} \cdot (1.0 + \text{dispersion} \cdot 0.35)$$
-
----
-
-## 🎛️ Configuration Parameters Matrix
-
-Every parameter in the generator maps directly to physical optical variables:
-
-| Parameter | Type | Default Step | Physical Value | Range | Description & Optical Effect |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `refraction` | `number` | `6 / 10` | `0.344` | `0.08 - 0.52` | Snell ray-tracing optical bending power along the bevel. |
-| `bevel` | `number` | `5 / 10` | `28 px` | `10 - 46 px` | Physical width of the curved meniscus rim along the perimeter. |
-| `dispersion` | `number` | `2 / 10` | `0.28` | `0.00 - 1.40` | Spectral prism wavelength split ($\Delta\lambda$) along curved edges. |
-| `darkTint` | `number` | `2 / 10` | `0.15` | `0.00 - 0.75` | Smoked optical glass absorption coefficient. |
-| `blur` | `number` | `0 / 10` | `0 px` | `0 - 22 px` | Frosted optical diffusion layer simulating internal micro-roughness. |
-| `radius` | `number` | `10 / 10` | `9999 px` | `14 - 9999 px` | Corner radius. Use `9999` for capsule / pill; `14 - 44` for cards. |
-| `width` | `number` | `5 / 10` | `620 px` | `360 - 880 px` | Width of the liquid glass container in pixels. |
-| `height` | `number` | `2 / 10` | `92 px` | `56 - 236 px` | Height of the liquid glass container. |
-
----
-
-## 🛠️ Usage & Integration Guide
-
-### 1. Standalone Single-File HTML Export
-
-The generated HTML file is fully self-contained with an embedded WebGL2 ray-tracer and includes a modular `createLiquidGlass` function ready to mount on any element:
-
-```html
-<div id="my-glass-container" style="position: absolute; width: 520px; height: 88px; border-radius: 9999px;">
-  <canvas id="my-glass-canvas" style="width: 100%; height: 100%; border-radius: inherit;"></canvas>
-  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white;">
-    LIQUID GLASS
-  </div>
 </div>
 
-<script>
-  // Mount the lens on any background canvas or image
-  const glass = createLiquidGlass(container, canvas, backdropSource, {
-    refraction: 0.344,
-    bevel: 28,
-    dispersion: 0.28,
-    darkTint: 0.15,
-    blur: 0,
-    radius: 9999,
-  });
+---
 
-  // Re-render when position or backdrop updates
-  glass.render();
-</script>
-```
+## ⚡ Why Liquid Glass?
 
-### 2. React / Next.js Component (TSX)
+Traditional CSS `backdrop-filter: blur(...)` produces muddy, flat glass without physical realism. **Liquid Glass** brings real optical simulation into modern web interfaces:
 
-Zero-dependency drop-in TypeScript component for modern web applications:
+- 🔮 **True Snell's Law Refraction**: Ray-traces background deflection across curved meniscus bevels ($n_1 \sin\theta_1 = n_2 \sin\theta_2$).
+- 🌈 **Chromatic Dispersion ($\Delta\lambda$)**: Spectral RGB wavelength splitting along high-curvature borders.
+- 💎 **Undistorted Flat Face**: 100% crystal-clear transmission at normal incidence — text remains sharp and readable with zero blur artifact.
+- ⚡ **120 FPS Hardware Acceleration**: Hardware-accelerated GLSL shaders optimized for battery-friendly mobile and desktop GPUs.
+- 🎛️ **Multi-Mode Versatility**: Out-of-the-box support for interactive tab navigations, luxury audio players, typography, and custom containers.
+
+---
+
+## 📦 Quick Start
+
+### 1. Installation
 
 ```bash
+npm install @mr-prog/liquid-glass
+# or
 pnpm add @mr-prog/liquid-glass
+# or
+yarn add @mr-prog/liquid-glass
 ```
 
-```tsx
-import React from 'react';
-import { LiquidGlass } from '@mr-prog/liquid-glass';
+### 2. Import and Use
 
-export default function GlassNavBar() {
+Drop the standalone liquid glass navbar into your app with standard defaults in just **one line**:
+
+```tsx
+import { LiquidGlass } from '@mr-prog/liquid-glass';
+import '@mr-prog/liquid-glass/liquid-glass.css';
+
+export default function App() {
   return (
-    <div className="relative w-full h-screen bg-[#07080d] flex items-center justify-center">
-      {/* Liquid Glass Capsule Navigation */}
-      <LiquidGlass
-        refraction={0.344}
-        bevel={28}
-        dispersion={0.28}
-        darkTint={0.15}
-        blur={0}
-        radius={9999}
-        style={{ width: '520px', height: '80px' }}
-      >
-        <nav className="flex items-center gap-8 font-mono text-xs uppercase tracking-widest text-slate-200">
-          <a href="#features" className="hover:text-cyan-400 transition-colors">Features</a>
-          <a href="#optics" className="hover:text-cyan-400 transition-colors">Optics</a>
-          <a href="#export" className="hover:text-cyan-400 transition-colors">Export</a>
-        </nav>
-      </LiquidGlass>
+    <div className="min-h-screen bg-[#07070b] flex items-center justify-center">
+      <LiquidGlass mode="nav" />
     </div>
   );
 }
@@ -144,68 +72,111 @@ export default function GlassNavBar() {
 
 ---
 
-## 📦 Getting Started Locally
+## 🎨 Built-in Modes
 
-### Prerequisites
+### 1. Flagship Navigation Bar (`mode="nav"`)
+Draggable squircle liquid lens with fluid spring momentum, responsive item tracking, and strict optical boundary clipping:
 
-- Node.js 18+
-- npm, pnpm, or yarn
-
-### Installation & Run
-
-```bash
-# Clone the repository
-git clone https://github.com/MR-PR0G/Liquid-Glass-Effect.git
-cd Liquid-Glass-Effect
-
-# Install dependencies
-npm install
-
-# Start 120 FPS development server
-npm run dev
+```tsx
+<LiquidGlass 
+  mode="nav" 
+  activeIndex={0} 
+  onChange={(index) => console.log('Active tab:', index)} 
+/>
 ```
 
-### Production Build
+<br />
 
-```bash
-npm run build
+### 2. Cupertino Luxury Audio Player (`mode="player"`)
+Minimalist frosted glass disc, dynamic 3-bar animated equalizer, lossless sound badge, and responsive circular frosted glass playback controls:
+
+```tsx
+<LiquidGlass 
+  mode="player" 
+  audioTitle="Cupertino Waves" 
+  audioArtist="MR PROG &bull; Lossless 48kHz"
+/>
 ```
 
-The production assets will be output to the `dist/` directory with zero build errors.
+<p align="center">
+  <img src="demo/audio-player-preview.png" alt="Luxury Audio Glass Player" width="700" style="border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.5);" />
+</p>
+
+<br />
+
+### 3. Viscous Fluid Typography (`mode="text"`)
+Ray-traced text refracting whatever is behind it:
+
+```tsx
+<LiquidGlass 
+  mode="text" 
+  text="LIQUID GLASS" 
+/>
+```
+
+<br />
+
+### 4. Custom Children Container (`mode="empty"`)
+Wrap any custom React element inside a physical liquid glass container:
+
+```tsx
+<LiquidGlass mode="empty" radius={28} className="p-8">
+  <h2 className="text-white text-2xl font-bold">Custom Glass Card</h2>
+  <p className="text-zinc-400 mt-2">Physical refraction with your custom content inside.</p>
+</LiquidGlass>
+```
 
 ---
 
-## 📂 Project Architecture
+## 🎛️ Configuration Parameters
 
-```text
-LIQUID GLASS GENERATOR/
-├── public/                     # Static assets & favicon
-├── src/
-│   ├── components/
-│   │   ├── generator/          # InteractiveGlassSandbox & Export Deck
-│   │   ├── soap-bubble/        # Physical WebGL2 Snell Shader Engine
-│   │   ├── refracted-text/     # Ray-traced dynamic typography
-│   │   ├── features/           # Seamless Floating Features Marquee
-│   │   └── topographic-flow/   # Subtle topographic contour canvas
-│   ├── pages/                  # Main HomePage layout
-│   ├── styles/                 # Tailwind CSS & keyframe animations
-│   ├── types/                  # Optical configuration types & default steps
-│   ├── utils/                  # Standalone HTML & TSX Code Generator
-│   ├── App.tsx                 # Root application orchestrator
-│   └── main.tsx                # Application entrypoint
-├── liquid-glass-react/         # Standalone npm package source
-├── package.json                # Project manifest (v0.2.7)
-├── tsconfig.json               # TypeScript configuration
-├── vite.config.ts              # Vite build pipeline
-└── README.md                   # Documentation
+All parameters map directly to real optical physics variables:
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `mode` | `'nav' \| 'player' \| 'text' \| 'empty'` | `'nav'` | Pre-configured interactive component mode. |
+| `refraction` | `number` | `0.344` | Optical bending power along curved meniscus edges. |
+| `bevel` | `number` | `28` | Width of the curved meniscus rim in screen pixels. |
+| `dispersion` | `number` | `0.28` | Spectral prism RGB wavelength divergence ($\Delta\lambda$). |
+| `darkTint` | `number` | `0.15` | Smoked obsidian optical absorption coefficient. |
+| `blur` | `number` | `0` | Internal micro-surface roughness diffusion. |
+| `radius` | `number` | `9999` | Corner rounding (`9999` for capsule/pill, `16–36` for cards). |
+| `wallpaper` | `'cross' \| 'stripes' \| 'none'` | `'cross'` | Built-in hardware-accelerated test backdrop. |
+
+---
+
+## 🛠️ Custom Navbar Items
+
+Customize icons, labels, and badges seamlessly with standard [lucide-react](https://lucide.dev) icons:
+
+```tsx
+import { useState } from 'react';
+import { LiquidGlass } from '@mr-prog/liquid-glass';
+import { Home, Compass, Bell, User } from 'lucide-react';
+import '@mr-prog/liquid-glass/liquid-glass.css';
+
+export function Navigation() {
+  const [active, setActive] = useState(0);
+
+  return (
+    <LiquidGlass
+      mode="nav"
+      activeIndex={active}
+      onChange={setActive}
+      items={[
+        { id: 'home', label: 'Home', icon: Home },
+        { id: 'explore', label: 'Explore', icon: Compass },
+        { id: 'alerts', label: 'Alerts', icon: Bell, badge: true },
+        { id: 'profile', label: 'Profile', icon: User },
+      ]}
+    />
+  );
+}
 ```
 
 ---
 
-## 📄 License & Attribution
+## 📄 License & Author
 
-This project is open-source under the **MIT License**. Free for personal and commercial use.
-
-- **Author**: [MR PROG](https://github.com/MR-PR0G)
-- **Official GitHub Repository**: [MR-PR0G/LiquidGlass](https://github.com/MR-PR0G/LiquidGlass)
-- **Experimental Optical Lab Project** &bull; Built with love by **MR PROG**.
+Engineered with passion by **[MR PROG](https://github.com/MR-PR0G)**.  
+Released under the [MIT License](LICENSE). Open-source, free for personal and commercial projects.
